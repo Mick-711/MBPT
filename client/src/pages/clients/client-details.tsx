@@ -1,871 +1,489 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import PageHeader from "@/components/layout/page-header";
-import {
-  ChevronLeft,
-  UserRound,
-  MessageSquare,
-  FileText,
-  BarChart3,
-  DumbbellIcon,
-  Utensils,
-  Loader2,
-  Calendar,
-  ArrowUpRight
-} from "lucide-react";
-import { format } from "date-fns";
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useParams, useLocation } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft } from 'lucide-react';
 
 export default function ClientDetails() {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [, navigate] = useLocation();
 
-  // Fetch client details
-  const { data: client, isLoading, error } = useQuery({
-    queryKey: [`/api/trainer/clients/${id}`],
-    queryFn: async ({ queryKey }) => {
-      const response = await fetch(queryKey[0], {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch client details");
-      }
-      return response.json();
-    },
+  const { data: client, isLoading } = useQuery({
+    queryKey: [`/api/clients/${id}`],
+    staleTime: 1000 * 60, // 1 minute
   });
 
-  // Fetch client's workouts
-  const { data: workouts } = useQuery({
-    queryKey: [`/api/clients/${id}/workouts`],
-    queryFn: async ({ queryKey }) => {
-      try {
-        const response = await fetch(queryKey[0], {
-          credentials: "include",
-        });
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching workouts:", error);
-        return [];
-      }
-    },
+  const { data: workoutPlans, isLoading: isLoadingWorkouts } = useQuery({
+    queryKey: [`/api/clients/${id}/workout-plans`],
+    staleTime: 1000 * 60, // 1 minute
   });
 
-  // Fetch client's nutrition plans
-  const { data: nutritionPlans } = useQuery({
-    queryKey: [`/api/clients/${id}/nutrition`],
-    queryFn: async ({ queryKey }) => {
-      try {
-        const response = await fetch(queryKey[0], {
-          credentials: "include",
-        });
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching nutrition plans:", error);
-        return [];
-      }
-    },
+  const { data: nutritionPlans, isLoading: isLoadingNutrition } = useQuery({
+    queryKey: [`/api/clients/${id}/nutrition-plans`],
+    staleTime: 1000 * 60, // 1 minute
   });
 
-  // Fetch client's progress
-  const { data: progress } = useQuery({
-    queryKey: [`/api/progress/${id}`],
-    queryFn: async ({ queryKey }) => {
-      try {
-        const response = await fetch(queryKey[0], {
-          credentials: "include",
-        });
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching progress:", error);
-        return [];
-      }
-    },
+  const { data: progressRecords, isLoading: isLoadingProgress } = useQuery({
+    queryKey: [`/api/clients/${id}/progress`],
+    staleTime: 1000 * 60, // 1 minute
   });
-
-  // Placeholder client data for initial implementation
-  const demoClient = {
-    id: parseInt(id || "1"),
-    userId: 101,
-    user: {
-      id: 101,
-      fullName: "Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      username: "sarah.j",
-      profileImage: "",
-    },
-    height: 165,
-    weight: 65,
-    goals: "Lose 15lbs and improve overall fitness. Focus on improving cardiovascular health and building lean muscle.",
-    healthInfo: "No major health issues. Mild knee pain during high-impact exercises.",
-    notes: "Prefers morning workouts. Motivated by tracking progress and setting small achievable goals.",
-    joinDate: "2023-07-15T00:00:00Z",
-    lastActive: new Date().toISOString(),
-  };
-
-  // Demo workouts
-  const demoWorkouts = [
-    {
-      id: 1,
-      name: "12-Week Weight Loss Program",
-      description: "Progressive program focusing on fat loss and muscle toning",
-      startDate: "2023-07-18T00:00:00Z",
-      endDate: "2023-10-10T00:00:00Z",
-      progress: 65,
-      status: "in_progress",
-    },
-    {
-      id: 2,
-      name: "Cardio Endurance Builder",
-      description: "Focuses on improving cardiovascular endurance",
-      startDate: "2023-06-01T00:00:00Z",
-      endDate: "2023-07-15T00:00:00Z",
-      progress: 100,
-      status: "completed",
-    },
-  ];
-
-  // Demo nutrition plans
-  const demoNutritionPlans = [
-    {
-      id: 1,
-      name: "Balanced Calorie Deficit Plan",
-      description: "1800 calories per day with balanced macros",
-      startDate: "2023-07-18T00:00:00Z",
-      endDate: "2023-10-10T00:00:00Z",
-      progress: 65,
-      status: "in_progress",
-    },
-  ];
-
-  // Demo progress records
-  const demoProgress = [
-    {
-      id: 1,
-      date: "2023-08-15T00:00:00Z",
-      weight: 62,
-      bodyFat: 26,
-      notes: "Feeling stronger, seeing progress in arms and legs",
-      measurements: {
-        chest: 89,
-        waist: 74,
-        hips: 98,
-        arms: 28,
-      },
-      photos: [
-        { id: 1, photoType: "front", photoUrl: "" },
-        { id: 2, photoType: "side", photoUrl: "" },
-      ],
-    },
-    {
-      id: 2,
-      date: "2023-07-15T00:00:00Z",
-      weight: 65,
-      bodyFat: 28,
-      notes: "Starting point. Feeling motivated and ready to start.",
-      measurements: {
-        chest: 91,
-        waist: 78,
-        hips: 102,
-        arms: 27,
-      },
-      photos: [
-        { id: 3, photoType: "front", photoUrl: "" },
-        { id: 4, photoType: "side", photoUrl: "" },
-      ],
-    },
-  ];
-
-  // Upcoming sessions
-  const demoUpcomingSessions = [
-    {
-      id: 1,
-      title: "Upper Body Strength",
-      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
-      time: "09:00 - 10:00",
-      type: "workout",
-    },
-    {
-      id: 2,
-      title: "Nutrition Check-in",
-      date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
-      time: "14:00 - 14:30",
-      type: "consultation",
-    },
-  ];
-
-  // Format date function
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "MMM d, yyyy");
-  };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-gray-500 dark:text-gray-400">Loading client details...</p>
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!client) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-gray-500 dark:text-gray-400 mb-4">Failed to load client details</p>
-        <Link href="/clients">
-          <Button variant="outline">Back to Clients</Button>
-        </Link>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Client Not Found</h1>
+          <p className="text-muted-foreground mb-6">The client you're looking for doesn't exist or you don't have access.</p>
+          <Button onClick={() => navigate('/clients')}>
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back to Clients
+          </Button>
+        </div>
       </div>
     );
   }
-
-  const clientData = client || demoClient;
-  const clientWorkouts = workouts || demoWorkouts;
-  const clientNutritionPlans = nutritionPlans || demoNutritionPlans;
-  const clientProgress = progress || demoProgress;
 
   return (
-    <>
-      <PageHeader
-        title={clientData.user.fullName}
-        description={clientData.goals?.substring(0, 100) + (clientData.goals?.length > 100 ? "..." : "")}
-        actions={[
-          {
-            label: "Back to Clients",
-            icon: <ChevronLeft size={18} />,
-            href: "/clients",
-            variant: "outline",
-          },
-          {
-            label: "Message",
-            icon: <MessageSquare size={18} />,
-            href: `/messages/${clientData.userId}`,
-            variant: "outline",
-          },
-          {
-            label: "Create Workout",
-            icon: <FileText size={18} />,
-            href: `/workouts/create?clientId=${clientData.id}`,
-            variant: "default",
-          },
-        ]}
-      />
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <Button variant="ghost" onClick={() => navigate('/clients')}>
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Back to Clients
+        </Button>
+      </div>
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-gray-50 dark:bg-gray-900">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar - Client Information */}
-          <Card className="md:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle>Client Information</CardTitle>
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
+        <div className="md:w-1/3">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24 mb-4">
+                    <AvatarImage src={client.profileImage} />
+                    <AvatarFallback className="text-2xl">{client.fullName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <CardTitle className="text-2xl text-center">{client.fullName}</CardTitle>
+                  <CardDescription className="text-center">{client.email}</CardDescription>
+                </div>
+                <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
+                  Active
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col items-center">
-                {clientData.user.profileImage ? (
-                  <img
-                    src={clientData.user.profileImage}
-                    alt={clientData.user.fullName}
-                    className="h-32 w-32 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-32 w-32 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-3xl font-semibold dark:bg-primary-900 dark:text-primary-300">
-                    {clientData.user.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+            <CardContent>
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Height</p>
+                    <p className="font-medium">{client.height || '--'} cm</p>
                   </div>
-                )}
-                <h3 className="mt-4 font-semibold text-lg text-center">
-                  {clientData.user.fullName}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {clientData.user.email}
-                </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Weight</p>
+                    <p className="font-medium">{client.weight || '--'} kg</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Subscription</p>
+                    <p className="font-medium">{client.subscription || 'None'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Joined</p>
+                    <p className="font-medium">{client.joinedDate || '--'}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-sm font-medium mb-2">Goals</p>
+                  <p className="text-sm text-muted-foreground">
+                    {client.goals || 'No goals specified.'}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-sm font-medium mb-2">Health Information</p>
+                  <p className="text-sm text-muted-foreground">
+                    {client.healthInfo || 'No health information provided.'}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-3 pt-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Height</p>
-                  <p className="text-sm">{clientData.height ? `${clientData.height} cm` : "Not set"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Weight</p>
-                  <p className="text-sm">{clientData.weight ? `${clientData.weight} kg` : "Not set"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Joined</p>
-                  <p className="text-sm">{formatDate(clientData.joinDate || new Date().toISOString())}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Active</p>
-                  <p className="text-sm">{formatDate(clientData.lastActive || new Date().toISOString())}</p>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Health Information</p>
-                <p className="text-sm">{clientData.healthInfo || "No health information provided"}</p>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Trainer Notes</p>
-                <p className="text-sm">{clientData.notes || "No notes added yet"}</p>
+              <div className="flex justify-between mt-6 pt-6 border-t">
+                <Button variant="outline" size="sm">
+                  <UserCog className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Message
+                </Button>
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Main Content */}
-          <div className="md:col-span-3 space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-6">
-                <TabsTrigger value="overview" className="flex items-center">
-                  <UserRound className="mr-2 h-4 w-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="workouts" className="flex items-center">
-                  <DumbbellIcon className="mr-2 h-4 w-4" />
-                  Workouts
-                </TabsTrigger>
-                <TabsTrigger value="nutrition" className="flex items-center">
-                  <Utensils className="mr-2 h-4 w-4" />
-                  Nutrition
-                </TabsTrigger>
-                <TabsTrigger value="progress" className="flex items-center">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Progress
-                </TabsTrigger>
-              </TabsList>
+        <div className="md:w-2/3">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid grid-cols-5 mb-8">
+              <TabsTrigger value="overview" className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="workouts" className="flex items-center">
+                <Dumbbell className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Workouts</span>
+              </TabsTrigger>
+              <TabsTrigger value="nutrition" className="flex items-center">
+                <Pizza className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Nutrition</span>
+              </TabsTrigger>
+              <TabsTrigger value="progress" className="flex items-center">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Progress</span>
+              </TabsTrigger>
+              <TabsTrigger value="messages" className="flex items-center">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Messages</span>
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6">
-                {/* Upcoming Sessions */}
+            <TabsContent value="overview" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-8">
+                    {client.activities && client.activities.length > 0 ? (
+                      client.activities.map((activity: any, index: number) => (
+                        <div key={index} className="flex">
+                          <div className="mr-4 flex flex-col items-center">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                              {activity.type === 'workout' && <Dumbbell className="h-5 w-5" />}
+                              {activity.type === 'nutrition' && <Pizza className="h-5 w-5" />}
+                              {activity.type === 'progress' && <BarChart3 className="h-5 w-5" />}
+                              {activity.type === 'message' && <MessageSquare className="h-5 w-5" />}
+                            </div>
+                            <div className="h-full w-px bg-muted" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{activity.title}</div>
+                            <div className="text-sm text-muted-foreground mb-2">{activity.date}</div>
+                            <div className="text-sm">{activity.description}</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        No recent activity to display.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Upcoming Sessions</CardTitle>
-                    <CardDescription>Scheduled workouts and consultations</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {demoUpcomingSessions.map((session) => (
-                        <div key={session.id} className="flex items-start p-3 border rounded-lg">
-                          <div className={`rounded-full p-2 mr-3 ${
-                            session.type === 'workout' 
-                              ? 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400' 
-                              : 'bg-accent-100 text-accent-600 dark:bg-accent-900 dark:text-accent-400'
-                          }`}>
-                            {session.type === 'workout' ? (
-                              <DumbbellIcon className="h-5 w-5" />
-                            ) : (
-                              <MessageSquare className="h-5 w-5" />
-                            )}
+                    {client.upcomingSessions && client.upcomingSessions.length > 0 ? (
+                      <div className="space-y-4">
+                        {client.upcomingSessions.map((session: any, index: number) => (
+                          <div key={index} className="flex items-start space-x-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                              <Calendar className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="font-medium">{session.title}</div>
+                              <div className="text-sm text-muted-foreground">{session.date} • {session.time}</div>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{session.title}</h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {format(new Date(session.date), "EEEE, MMMM d")} • {session.time}
-                            </p>
-                          </div>
-                          <Button variant="ghost" size="icon">
-                            <Calendar className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Progress */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Recent Progress</CardTitle>
-                        <CardDescription>Latest measurements and progress photos</CardDescription>
-                      </div>
-                      <Link href={`/clients/${id}/progress`}>
-                        <Button variant="ghost" size="sm" className="gap-1 text-primary">
-                          View All
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {clientProgress.length > 0 ? (
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Current Weight</p>
-                            <p className="text-xl font-semibold mt-1">{clientProgress[0].weight} kg</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 ? 
-                                `${(clientProgress[0].weight - clientProgress[1].weight).toFixed(1)} kg since last check-in` 
-                                : "First check-in"}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Body Fat</p>
-                            <p className="text-xl font-semibold mt-1">{clientProgress[0].bodyFat}%</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 ? 
-                                `${(clientProgress[0].bodyFat - clientProgress[1].bodyFat).toFixed(1)}% since last check-in` 
-                                : "First check-in"}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Waist</p>
-                            <p className="text-xl font-semibold mt-1">{clientProgress[0].measurements.waist} cm</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 ? 
-                                `${(clientProgress[0].measurements.waist - clientProgress[1].measurements.waist).toFixed(1)} cm since last check-in` 
-                                : "First check-in"}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-3 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Last Check-in</p>
-                            <p className="text-xl font-semibold mt-1">{format(new Date(clientProgress[0].date), "MMM d")}</p>
-                            <p className="text-xs text-gray-500">{format(new Date(clientProgress[0].date), "yyyy")}</p>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Notes</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">{clientProgress[0].notes}</p>
-                        </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="text-center py-6">
-                        <p className="text-gray-500 dark:text-gray-400">No progress records yet</p>
-                        <Link href={`/clients/${id}/progress/new`}>
-                          <Button className="mt-3" variant="outline">Add First Progress Entry</Button>
-                        </Link>
+                      <div className="text-center py-6 text-muted-foreground">
+                        No upcoming sessions scheduled.
                       </div>
                     )}
                   </CardContent>
                 </Card>
-
-                {/* Current Programs Summary */}
+                
                 <Card>
                   <CardHeader>
-                    <CardTitle>Current Programs</CardTitle>
-                    <CardDescription>Active workout and nutrition plans</CardDescription>
+                    <CardTitle>Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {clientWorkouts.filter(w => w.status === 'in_progress').map((workout) => (
-                        <div key={workout.id} className="border rounded-lg p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="rounded-full bg-primary-100 p-2 text-primary-600 dark:bg-primary-900 dark:text-primary-400">
-                              <DumbbellIcon className="h-5 w-5" />
+                    <p className="text-muted-foreground mb-4">
+                      {client.notes || 'No notes available for this client.'}
+                    </p>
+                    <Button variant="outline" size="sm">
+                      Add Note
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="workouts" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Workout Plans</h2>
+                <Button>
+                  Create Workout Plan
+                </Button>
+              </div>
+
+              {isLoadingWorkouts ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : !workoutPlans || workoutPlans.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center p-10">
+                    <h3 className="text-xl font-medium mb-2">No Workout Plans</h3>
+                    <p className="text-muted-foreground mb-4">
+                      This client doesn't have any workout plans yet.
+                    </p>
+                    <Button>
+                      Create Workout Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {workoutPlans.map((plan: any) => (
+                    <Card key={plan.id}>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>{plan.name}</CardTitle>
+                          <Badge variant="outline">
+                            {plan.status || 'Active'}
+                          </Badge>
+                        </div>
+                        <CardDescription>
+                          {plan.startDate} - {plan.endDate || 'Ongoing'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="mb-4">{plan.description}</p>
+                        <div className="space-y-2">
+                          {plan.workouts && plan.workouts.map((workout: any) => (
+                            <div key={workout.id} className="border rounded-md p-3 flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">{workout.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Day {workout.day} • {workout.exerciseCount} exercises
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="sm">View</Button>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="nutrition" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Nutrition Plans</h2>
+                <Button>
+                  Create Nutrition Plan
+                </Button>
+              </div>
+
+              {isLoadingNutrition ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : !nutritionPlans || nutritionPlans.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center p-10">
+                    <h3 className="text-xl font-medium mb-2">No Nutrition Plans</h3>
+                    <p className="text-muted-foreground mb-4">
+                      This client doesn't have any nutrition plans yet.
+                    </p>
+                    <Button>
+                      Create Nutrition Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {nutritionPlans.map((plan: any) => (
+                    <Card key={plan.id}>
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <CardTitle>{plan.name}</CardTitle>
+                          <Badge variant="outline">
+                            {plan.status || 'Active'}
+                          </Badge>
+                        </div>
+                        <CardDescription>
+                          {plan.startDate} - {plan.endDate || 'Ongoing'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p>{plan.description}</p>
+                        
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-md text-center">
+                            <p className="text-xs text-muted-foreground">Daily Calories</p>
+                            <p className="font-medium">{plan.dailyCalories} kcal</p>
+                          </div>
+                          <div className="bg-green-100 dark:bg-green-900 p-3 rounded-md text-center">
+                            <p className="text-xs text-muted-foreground">Protein</p>
+                            <p className="font-medium">{plan.proteinPercentage}%</p>
+                          </div>
+                          <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-md text-center">
+                            <p className="text-xs text-muted-foreground">Carbs</p>
+                            <p className="font-medium">{plan.carbsPercentage}%</p>
+                          </div>
+                        </div>
+
+                        <Button variant="outline" size="sm">View Full Plan</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="progress" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Progress Tracking</h2>
+                <Button>
+                  Add New Record
+                </Button>
+              </div>
+
+              {isLoadingProgress ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : !progressRecords || progressRecords.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center p-10">
+                    <h3 className="text-xl font-medium mb-2">No Progress Records</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Start tracking this client's progress by adding their first record.
+                    </p>
+                    <Button>
+                      Add First Record
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Progress History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {progressRecords.map((record: any) => (
+                        <div key={record.id} className="border-b pb-4 last:border-0">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-medium">{record.date}</h3>
+                            <Button variant="ghost" size="sm">View Details</Button>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Weight</p>
+                              <p className="font-medium">{record.weight} kg</p>
                             </div>
                             <div>
-                              <h4 className="font-medium">{workout.name}</h4>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatDate(workout.startDate)} - {formatDate(workout.endDate)}
+                              <p className="text-xs text-muted-foreground">Body Fat</p>
+                              <p className="font-medium">{record.bodyFat || '--'}%</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Muscle Mass</p>
+                              <p className="font-medium">{record.muscleMass || '--'}%</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Photos</p>
+                              <p className="font-medium">{record.photoCount || 0}</p>
+                            </div>
+                          </div>
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground">{record.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="messages" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Messages</CardTitle>
+                  <CardDescription>Your conversation with {client.fullName}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="flex flex-col h-[500px]">
+                    <div className="flex-1 overflow-y-auto p-4">
+                      {client.messages && client.messages.length > 0 ? (
+                        client.messages.map((message: any, index: number) => (
+                          <div 
+                            key={index}
+                            className={`mb-4 flex ${message.fromClient ? 'justify-start' : 'justify-end'}`}
+                          >
+                            <div 
+                              className={`max-w-[75%] rounded-lg p-3 ${
+                                message.fromClient 
+                                  ? 'bg-muted text-foreground' 
+                                  : 'bg-primary text-primary-foreground'
+                              }`}
+                            >
+                              <p>{message.content}</p>
+                              <p className={`text-xs mt-1 ${message.fromClient ? 'text-muted-foreground' : 'text-primary-foreground/80'}`}>
+                                {message.time}
                               </p>
                             </div>
                           </div>
-                          <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                            <div 
-                              className="h-2 bg-primary rounded-full" 
-                              style={{ width: `${workout.progress}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between mt-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                            <span className="text-xs font-medium">{workout.progress}%</span>
-                          </div>
-                          <div className="mt-3">
-                            <Link href={`/workouts/${workout.id}`}>
-                              <Button variant="ghost" size="sm" className="text-primary">
-                                View Workout
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {clientNutritionPlans.filter(n => n.status === 'in_progress').map((plan) => (
-                        <div key={plan.id} className="border rounded-lg p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="rounded-full bg-accent-100 p-2 text-accent-600 dark:bg-accent-900 dark:text-accent-400">
-                              <Utensils className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <h4 className="font-medium">{plan.name}</h4>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatDate(plan.startDate)} - {formatDate(plan.endDate)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                            <div 
-                              className="h-2 bg-accent-500 rounded-full" 
-                              style={{ width: `${plan.progress}%` }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between mt-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                            <span className="text-xs font-medium">{plan.progress}%</span>
-                          </div>
-                          <div className="mt-3">
-                            <Link href={`/nutrition/${plan.id}`}>
-                              <Button variant="ghost" size="sm" className="text-primary">
-                                View Nutrition Plan
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {clientWorkouts.filter(w => w.status === 'in_progress').length === 0 && 
-                      clientNutritionPlans.filter(n => n.status === 'in_progress').length === 0 && (
-                        <div className="text-center py-6">
-                          <p className="text-gray-500 dark:text-gray-400">No active programs</p>
-                          <div className="flex gap-2 justify-center mt-3">
-                            <Link href={`/workouts/create?clientId=${clientData.id}`}>
-                              <Button variant="outline">Create Workout</Button>
-                            </Link>
-                            <Link href={`/nutrition/create?clientId=${clientData.id}`}>
-                              <Button variant="outline">Create Nutrition Plan</Button>
-                            </Link>
+                        ))
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <p className="text-xl font-medium mb-2">No messages yet</p>
+                            <p className="text-muted-foreground">Start a conversation with {client.fullName}</p>
                           </div>
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Workouts Tab */}
-              <TabsContent value="workouts" className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Workout Programs</h2>
-                  <Link href={`/workouts/create?clientId=${clientData.id}`}>
-                    <Button>Create Workout</Button>
-                  </Link>
-                </div>
-                
-                {clientWorkouts.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-12">
-                      <DumbbellIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No workout plans yet</h3>
-                      <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        Create a workout plan to get started with this client
-                      </p>
-                      <Link href={`/workouts/create?clientId=${clientData.id}`}>
-                        <Button>Create First Workout</Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid grid-cols-1 gap-6">
-                    {clientWorkouts.map((workout) => (
-                      <Card key={workout.id}>
-                        <CardContent className="p-6">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                              <h3 className="text-lg font-semibold">{workout.name}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatDate(workout.startDate)} - {formatDate(workout.endDate)}
-                              </p>
-                              <p className="text-sm mt-2">{workout.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                workout.status === 'completed' 
-                                  ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-300' 
-                                  : workout.status === 'in_progress'
-                                  ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                              }`}>
-                                {workout.status === 'in_progress' ? 'In Progress' : 
-                                 workout.status === 'completed' ? 'Completed' : 'Not Started'}
-                              </span>
-                              <Link href={`/workouts/${workout.id}`}>
-                                <Button variant="outline" size="sm">View Details</Button>
-                              </Link>
-                            </div>
-                          </div>
-                          {workout.status === 'in_progress' && (
-                            <div className="mt-4">
-                              <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${workout.progress}%` }}
-                                ></div>
-                              </div>
-                              <div className="flex justify-between mt-1">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                                <span className="text-xs font-medium">{workout.progress}%</span>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Nutrition Tab */}
-              <TabsContent value="nutrition" className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Nutrition Plans</h2>
-                  <Link href={`/nutrition/create?clientId=${clientData.id}`}>
-                    <Button>Create Nutrition Plan</Button>
-                  </Link>
-                </div>
-                
-                {clientNutritionPlans.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-12">
-                      <Utensils className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No nutrition plans yet</h3>
-                      <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        Create a nutrition plan to help this client reach their goals
-                      </p>
-                      <Link href={`/nutrition/create?clientId=${clientData.id}`}>
-                        <Button>Create First Nutrition Plan</Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid grid-cols-1 gap-6">
-                    {clientNutritionPlans.map((plan) => (
-                      <Card key={plan.id}>
-                        <CardContent className="p-6">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                              <h3 className="text-lg font-semibold">{plan.name}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatDate(plan.startDate)} - {formatDate(plan.endDate)}
-                              </p>
-                              <p className="text-sm mt-2">{plan.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                plan.status === 'completed' 
-                                  ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-300' 
-                                  : plan.status === 'in_progress'
-                                  ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                              }`}>
-                                {plan.status === 'in_progress' ? 'In Progress' : 
-                                 plan.status === 'completed' ? 'Completed' : 'Not Started'}
-                              </span>
-                              <Link href={`/nutrition/${plan.id}`}>
-                                <Button variant="outline" size="sm">View Details</Button>
-                              </Link>
-                            </div>
-                          </div>
-                          {plan.status === 'in_progress' && (
-                            <div className="mt-4">
-                              <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-2 bg-primary rounded-full" 
-                                  style={{ width: `${plan.progress}%` }}
-                                ></div>
-                              </div>
-                              <div className="flex justify-between mt-1">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                                <span className="text-xs font-medium">{plan.progress}%</span>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Progress Tab */}
-              <TabsContent value="progress" className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Progress Records</h2>
-                  <Link href={`/clients/${id}/progress/new`}>
-                    <Button>Add Progress Record</Button>
-                  </Link>
-                </div>
-                
-                {clientProgress.length === 0 ? (
-                  <Card>
-                    <CardContent className="text-center py-12">
-                      <BarChart3 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No progress records yet</h3>
-                      <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        Add the first progress record to start tracking this client's journey
-                      </p>
-                      <Link href={`/clients/${id}/progress/new`}>
-                        <Button>Add First Progress Record</Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Progress Summary Card */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Progress Summary</CardTitle>
-                        <CardDescription>
-                          Comparing latest measurements with initial check-in
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="border rounded-lg p-4 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Weight</p>
-                            <p className="text-xl font-semibold">{clientProgress[0].weight} kg</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 &&
-                                `${(
-                                  clientProgress[0].weight - clientProgress[clientProgress.length - 1].weight
-                                ).toFixed(1)} kg total`}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-4 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Body Fat</p>
-                            <p className="text-xl font-semibold">{clientProgress[0].bodyFat}%</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 &&
-                                `${(
-                                  clientProgress[0].bodyFat - clientProgress[clientProgress.length - 1].bodyFat
-                                ).toFixed(1)}% total`}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-4 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Waist</p>
-                            <p className="text-xl font-semibold">{clientProgress[0].measurements.waist} cm</p>
-                            <p className="text-xs text-secondary-500">
-                              {clientProgress.length > 1 &&
-                                `${(
-                                  clientProgress[0].measurements.waist - 
-                                  clientProgress[clientProgress.length - 1].measurements.waist
-                                ).toFixed(1)} cm total`}
-                            </p>
-                          </div>
-                          <div className="border rounded-lg p-4 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Progress Duration</p>
-                            <p className="text-xl font-semibold">
-                              {clientProgress.length > 1 
-                                ? differenceInWeeks(
-                                    new Date(clientProgress[0].date),
-                                    new Date(clientProgress[clientProgress.length - 1].date)
-                                  )
-                                : 0} weeks
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {clientProgress.length} check-ins
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Progress Records Timeline */}
-                    <div className="space-y-6">
-                      {clientProgress.map((record, index) => (
-                        <Card key={record.id}>
-                          <CardContent className="p-6">
-                            <div className="flex flex-col md:flex-row gap-6">
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h3 className="text-lg font-semibold">
-                                    {formatDate(record.date)}
-                                  </h3>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {index === 0 
-                                      ? "Latest Check-in" 
-                                      : index === clientProgress.length - 1 
-                                      ? "Initial Check-in" 
-                                      : `Check-in #${clientProgress.length - index}`}
-                                  </span>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Weight</p>
-                                    <p className="font-medium">{record.weight} kg</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Body Fat</p>
-                                    <p className="font-medium">{record.bodyFat}%</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Waist</p>
-                                    <p className="font-medium">{record.measurements.waist} cm</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Chest</p>
-                                    <p className="font-medium">{record.measurements.chest} cm</p>
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Notes</p>
-                                  <p className="text-sm">{record.notes}</p>
-                                </div>
-                              </div>
-                              
-                              {record.photos?.length > 0 && (
-                                <div className="flex gap-2">
-                                  {record.photos.map((photo) => (
-                                    <div key={photo.id} className="relative w-24 h-32 border rounded-md overflow-hidden">
-                                      {photo.photoUrl ? (
-                                        <img 
-                                          src={photo.photoUrl} 
-                                          alt={`${photo.photoType} view`} 
-                                          className="w-full h-full object-cover"
-                                        />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                                          <p className="text-xs text-gray-500 capitalize">{photo.photoType}</p>
-                                        </div>
-                                      )}
-                                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-2 text-center capitalize">
-                                        {photo.photoType}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                    <div className="border-t p-4">
+                      <div className="flex space-x-2">
+                        <textarea 
+                          className="flex-1 min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder={`Message ${client.fullName}...`}
+                        />
+                        <Button className="mt-auto">Send</Button>
+                      </div>
                     </div>
                   </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   );
-}
-
-// Helper function to calculate the difference in weeks between two dates
-function differenceInWeeks(dateLeft: Date, dateRight: Date): number {
-  const diffTime = Math.abs(dateLeft.getTime() - dateRight.getTime());
-  const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-  return diffWeeks;
 }
