@@ -116,12 +116,19 @@ export const exercises = pgTable('exercises', {
   name: text('name').notNull(),
   description: text('description'),
   instructions: text('instructions'),
-  muscleGroup: text('muscle_group'),
+  muscleGroup: text('muscle_group').notNull(),
+  secondaryMuscles: text('secondary_muscles').array(),
+  category: text('category').notNull().default('strength'), // strength, cardio, flexibility, etc.
   equipment: text('equipment'),
-  difficulty: text('difficulty'),
+  difficulty: text('difficulty').notNull().default('intermediate'),
   videoUrl: text('video_url'),
   imageUrl: text('image_url'),
   isTemplate: boolean('is_template').default(false),
+  isPublic: boolean('is_public').default(true), // Whether visible to all trainers or just creator
+  source: text('source'), // Where the exercise came from if imported
+  estimatedCalories: integer('estimated_calories'),
+  notes: text('notes'),
+  tags: text('tags').array(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
