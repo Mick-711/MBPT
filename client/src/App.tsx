@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LogOut } from "lucide-react";
 
 // Layout components
 import Sidebar from "@/components/layout/sidebar";
@@ -233,6 +234,19 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <div className="min-h-screen pb-16"> {/* Add padding for bottom nav */}
+          <div className="sticky top-0 z-50 bg-primary text-white p-2 text-center font-medium shadow-md">
+            <button 
+              onClick={() => window.location.href = '/'} 
+              className="flex items-center justify-center mx-auto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 rotate-180">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Back to View Selector
+            </button>
+          </div>
           <Router />
           <MobileClientNav />
         </div>

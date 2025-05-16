@@ -139,7 +139,7 @@ export default function Sidebar() {
 
       <div className="sticky bottom-0 p-4 border-t border-sidebar-border bg-sidebar shadow-md">
         <Button 
-          variant="primary"
+          variant="default"
           className="w-full flex items-center justify-center hover:bg-primary-600 transition-colors"
           onClick={() => {
             if (typeof window !== 'undefined') {
