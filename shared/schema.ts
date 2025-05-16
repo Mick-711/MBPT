@@ -109,6 +109,11 @@ export const workouts = pgTable('workouts', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Exercise Categories enum
+export const exerciseCategoryEnum = pgEnum('exercise_category', [
+  'strength', 'cardio', 'flexibility', 'balance', 'plyometric', 'functional', 'sport_specific', 'rehabilitation', 'other'
+]);
+
 // Exercise
 export const exercises = pgTable('exercises', {
   id: serial('id').primaryKey(),
@@ -117,11 +122,17 @@ export const exercises = pgTable('exercises', {
   description: text('description'),
   instructions: text('instructions'),
   muscleGroup: text('muscle_group'),
+  secondaryMuscleGroups: text('secondary_muscle_groups').array(),
   equipment: text('equipment'),
   difficulty: text('difficulty'),
+  category: exerciseCategoryEnum('category').default('strength'),
   videoUrl: text('video_url'),
   imageUrl: text('image_url'),
+  source: text('source'),
+  isPublic: boolean('is_public').default(false), // Can be shared with other trainers
   isTemplate: boolean('is_template').default(false),
+  tags: text('tags').array(),
+  metaData: text('meta_data'), // For storing any additional data as JSON
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

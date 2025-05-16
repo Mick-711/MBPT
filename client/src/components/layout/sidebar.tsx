@@ -109,6 +109,12 @@ export default function Sidebar() {
               active={location.startsWith("/workouts")}
             />
             <SidebarItem
+              icon={<Dumbbell size={18} className="rotate-45" />}
+              label="Exercise Library"
+              href="/exercises"
+              active={location.startsWith("/exercises")}
+            />
+            <SidebarItem
               icon={<Utensils size={18} />}
               label="Nutrition"
               href="/nutrition"
