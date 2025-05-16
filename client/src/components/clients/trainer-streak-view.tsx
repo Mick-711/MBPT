@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, Trophy, Medal, Flame, Gift, Star, Crown } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Flame, Star, CheckCircle } from 'lucide-react';
 
 interface TrainerStreakViewProps {
   streakCount: number;
@@ -29,12 +30,6 @@ export default function TrainerStreakView({
   rewards = []
 }: TrainerStreakViewProps) {
   
-  // Process rewards to update unlocked status based on streak count
-  const processedRewards = rewards.map(reward => ({
-    ...reward,
-    unlocked: streakCount >= reward.unlocksAt
-  }));
-  
   // Fill streakDays with default values if not provided
   const defaultStreakDays = [];
   if (streakDays.length === 0) {
@@ -52,15 +47,21 @@ export default function TrainerStreakView({
   
   const displayStreakDays = streakDays.length > 0 ? streakDays : defaultStreakDays;
   
+  // Calculate how many milestones the client has reached based on streak count
+  const milestonesReached = rewards.filter(reward => streakCount >= reward.unlocksAt).length;
+  const totalMilestones = rewards.length;
+  
   return (
     <div>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Flame className="h-5 w-5 mr-2 text-orange-500" />
-            Client Streak Tracking
+            Client Adherence
           </CardTitle>
-          <CardDescription>Client's habit adherence progress</CardDescription>
+          <CardDescription>
+            Habit tracking summary for this client
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6">
@@ -96,7 +97,7 @@ export default function TrainerStreakView({
                       }
                     `}>
                       {day.completed ? (
-                        <Star className="h-4 w-4" />
+                        <CheckCircle className="h-4 w-4" />
                       ) : (
                         <span className="text-xs">{date.getDate()}</span>
                       )}
@@ -108,30 +109,26 @@ export default function TrainerStreakView({
           </div>
           
           <div>
-            <h4 className="text-sm font-medium mb-2">Achievement Milestones</h4>
-            <div className="grid grid-cols-5 gap-2">
-              {processedRewards.map((reward) => (
-                <div
-                  key={reward.id}
-                  className={`h-auto p-2 flex flex-col items-center border rounded-lg ${
-                    reward.unlocked ? 'border-primary' : 'border-muted opacity-70'
-                  }`}
-                >
-                  <div className="mb-1">
-                    {reward.unlocked ? reward.icon : (
-                      <div className="relative">
-                        {reward.icon}
-                        <div className="absolute inset-0 bg-background opacity-80 flex items-center justify-center rounded-full">
-                          <Gift className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-xs truncate w-full text-center">
-                    {reward.unlocked ? reward.name : `${reward.unlocksAt} days`}
-                  </span>
-                </div>
-              ))}
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-sm font-medium">Achievement Progress</h4>
+              <Badge variant="outline">{milestonesReached} of {totalMilestones}</Badge>
+            </div>
+            
+            <div className="w-full bg-muted rounded-full h-2.5">
+              <div 
+                className="bg-primary h-2.5 rounded-full" 
+                style={{ width: `${(milestonesReached / totalMilestones) * 100}%` }}
+              ></div>
+            </div>
+            
+            <div className="mt-4 text-sm text-muted-foreground">
+              {milestonesReached >= totalMilestones ? (
+                <p>Client has reached all available milestones.</p>
+              ) : (
+                <p>Client will reach next milestone at {
+                  rewards.find(reward => reward.unlocksAt > streakCount)?.unlocksAt || 0
+                } days of streak.</p>
+              )}
             </div>
           </div>
         </CardContent>
