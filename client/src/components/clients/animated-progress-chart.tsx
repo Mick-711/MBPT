@@ -1,21 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ChevronUp, ChevronDown, Target } from 'lucide-react';
+import { ChevronUp, ChevronDown, Target, CalendarDays, CheckCircle } from 'lucide-react';
 
 interface ProgressChartProps {
   data: Array<{ date: string; value: number }>;
   animate: boolean;
   goal?: number;
   isWeightChart?: boolean;
+  isWorkoutChart?: boolean;
 }
 
-export default function AnimatedProgressChart({ data, animate, goal, isWeightChart = false }: ProgressChartProps) {
+export default function AnimatedProgressChart({ 
+  data, 
+  animate, 
+  goal, 
+  isWeightChart = false,
+  isWorkoutChart = false
+}: ProgressChartProps) {
   const [currentValue, setCurrentValue] = useState(0);
   const [isIncreasing, setIsIncreasing] = useState(false);
   const [percentToGoal, setPercentToGoal] = useState(0);
   const [showAnimation, setShowAnimation] = useState(false);
   const animationRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Get initial value (starting point)
+  const getInitialValue = () => {
+    if (!data || data.length === 0) return 0;
+    return data[0].value;
+  };
 
   const getChangeIndicator = () => {
     if (data.length < 2) return null;
@@ -74,15 +87,18 @@ export default function AnimatedProgressChart({ data, animate, goal, isWeightCha
           // For other charts, we generally want to show progress toward increase
           let percentage;
           if (isWeightChart) {
-            if (previousValue > goal) {
+            if (getInitialValue() > goal) {
               // Weight reduction goal
-              const totalReduction = previousValue - goal;
-              const currentReduction = previousValue - newValue;
+              const totalReduction = getInitialValue() - goal;
+              const currentReduction = getInitialValue() - newValue;
               percentage = (currentReduction / totalReduction) * 100;
             } else {
               // Weight gain goal
               percentage = (newValue / goal) * 100;
             }
+          } else if (isWorkoutChart) {
+            // Workout chart shows workouts completed vs programmed per week
+            percentage = (newValue / goal) * 100;
           } else {
             // Regular progress toward increasing a value
             percentage = (newValue / goal) * 100;
@@ -112,15 +128,18 @@ export default function AnimatedProgressChart({ data, animate, goal, isWeightCha
         // Calculate final percentage
         let percentage;
         if (isWeightChart) {
-          if (previousValue > goal) {
+          if (getInitialValue() > goal) {
             // Weight reduction goal
-            const totalReduction = previousValue - goal;
-            const currentReduction = previousValue - latestValue;
+            const totalReduction = getInitialValue() - goal;
+            const currentReduction = getInitialValue() - latestValue;
             percentage = (currentReduction / totalReduction) * 100;
           } else {
             // Weight gain goal
             percentage = (latestValue / goal) * 100;
           }
+        } else if (isWorkoutChart) {
+          // Workout chart shows workouts completed vs programmed per week
+          percentage = (latestValue / goal) * 100;
         } else {
           // Regular progress toward increasing a value
           percentage = (latestValue / goal) * 100;
@@ -129,60 +148,120 @@ export default function AnimatedProgressChart({ data, animate, goal, isWeightCha
         setPercentToGoal(Math.min(percentage, 100));
       }
     }
-  }, [data, animate, goal, isWeightChart]);
+  }, [data, animate, goal, isWeightChart, isWorkoutChart]);
 
   if (!data || data.length === 0) {
     return <div>No data available</div>;
   }
 
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center mb-2">
-          <div className="text-lg font-semibold">
-            {currentValue.toFixed(1)}
-            <span className="text-xs text-muted-foreground ml-1">
-              {isWeightChart ? 'kg' : ''}
-            </span>
+  // Render specific content based on chart type
+  const renderContent = () => {
+    if (isWeightChart) {
+      return (
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center">
+              <div className="text-lg font-semibold">{getInitialValue().toFixed(1)} kg</div>
+              <div className="text-xs mx-2 text-muted-foreground">→</div>
+              <div className="text-lg font-semibold">{currentValue.toFixed(1)} kg</div>
+            </div>
+            {getChangeIndicator()}
           </div>
-          {getChangeIndicator()}
-        </div>
-        
-        {goal && (
+          
+          {goal && (
+            <div className="mb-3">
+              <div className="flex justify-between text-xs mb-1">
+                <span>Progress to goal</span>
+                <div className="flex items-center">
+                  <Target className="w-3 h-3 mr-1 text-primary" />
+                  <span>{goal.toFixed(1)} kg</span>
+                </div>
+              </div>
+              <Progress value={percentToGoal} className={`h-2 ${showAnimation ? 'animate-pulse' : ''}`} />
+            </div>
+          )}
+        </>
+      );
+    } else if (isWorkoutChart) {
+      return (
+        <>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-lg font-semibold flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
+              <span>{currentValue.toFixed(0)}</span>
+              <span className="text-xs text-muted-foreground ml-1">
+                / {goal} workouts this week
+              </span>
+            </div>
+          </div>
+          
           <div className="mb-3">
             <div className="flex justify-between text-xs mb-1">
-              <span>Progress to goal</span>
+              <span>Weekly completion</span>
               <div className="flex items-center">
-                <Target className="w-3 h-3 mr-1 text-primary" />
-                <span>{goal.toFixed(1)}{isWeightChart ? 'kg' : ''}</span>
+                <CalendarDays className="w-3 h-3 mr-1 text-primary" />
+                <span>{currentValue.toFixed(0)}/{goal} ({Math.round(percentToGoal)}%)</span>
               </div>
             </div>
             <Progress value={percentToGoal} className={`h-2 ${showAnimation ? 'animate-pulse' : ''}`} />
           </div>
-        )}
-        
-        <div className="flex mt-4 space-x-1">
-          {data.slice(-7).map((item, index) => {
-            const max = Math.max(...data.slice(-7).map(d => d.value));
-            const min = Math.min(...data.slice(-7).map(d => d.value));
-            const range = max - min;
-            const height = range > 0 ? ((item.value - min) / range) * 60 + 10 : 35;
-            
-            return (
-              <div key={index} className="flex flex-col items-center flex-1">
-                <div className="w-full flex justify-center">
-                  <div 
-                    className={`w-full max-w-[20px] rounded-t-sm ${index === data.slice(-7).length - 1 ? 'bg-primary' : 'bg-muted'}`}
-                    style={{ height: `${height}px` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1 truncate w-full text-center">
-                  {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </>
+      );
+    } else {
+      // Default for other chart types (like nutrition)
+      return (
+        <>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-lg font-semibold">
+              {currentValue.toFixed(1)}
+            </div>
+            {getChangeIndicator()}
+          </div>
+          
+          {goal && (
+            <div className="mb-3">
+              <div className="flex justify-between text-xs mb-1">
+                <span>Progress to goal</span>
+                <div className="flex items-center">
+                  <Target className="w-3 h-3 mr-1 text-primary" />
+                  <span>{goal.toFixed(1)}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <Progress value={percentToGoal} className={`h-2 ${showAnimation ? 'animate-pulse' : ''}`} />
+            </div>
+          )}
+          
+          <div className="flex mt-4 space-x-1">
+            {data.slice(-7).map((item, index) => {
+              const max = Math.max(...data.slice(-7).map(d => d.value));
+              const min = Math.min(...data.slice(-7).map(d => d.value));
+              const range = max - min;
+              const height = range > 0 ? ((item.value - min) / range) * 60 + 10 : 35;
+              
+              return (
+                <div key={index} className="flex flex-col items-center flex-1">
+                  <div className="w-full flex justify-center">
+                    <div 
+                      className={`w-full max-w-[20px] rounded-t-sm ${index === data.slice(-7).length - 1 ? 'bg-primary' : 'bg-muted'}`}
+                      style={{ height: `${height}px` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 truncate w-full text-center">
+                    {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      );
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        {renderContent()}
       </CardContent>
     </Card>
   );

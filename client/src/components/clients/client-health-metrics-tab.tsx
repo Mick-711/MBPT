@@ -32,13 +32,14 @@ const healthMetrics = {
     { date: '2025-05-08', value: 78.6 }
   ],
   workoutCompletion: [
-    { date: '2025-04-30', value: 70 },
-    { date: '2025-05-01', value: 90 },
-    { date: '2025-05-02', value: 85 },
-    { date: '2025-05-03', value: 0 },
-    { date: '2025-05-04', value: 100 },
-    { date: '2025-05-05', value: 90 },
-    { date: '2025-05-06', value: 80 }
+    // Weekly programmed workouts - shows completed vs total for the week
+    { date: '2025-04-30', value: 3 }, // 3 completed workouts 
+    { date: '2025-05-01', value: 3 },
+    { date: '2025-05-02', value: 3 },
+    { date: '2025-05-03', value: 3 },
+    { date: '2025-05-04', value: 4 },
+    { date: '2025-05-05', value: 4 },
+    { date: '2025-05-06', value: 4 }
   ],
   nutritionAdherence: [
     { date: '2025-04-30', value: 60 },
@@ -128,7 +129,8 @@ export default function ClientHealthMetricsTab({ client }) {
               <AnimatedProgressChart 
                 data={healthMetrics.workoutCompletion}
                 animate={animate}
-                goal={100}
+                goal={5} // Weekly goal of 5 workouts
+                isWorkoutChart={true}
               />
             </div>
           </div>
