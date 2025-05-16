@@ -159,12 +159,12 @@ export default function ClientHealthMetricsTab({ client }) {
                   <div className="text-lg font-medium">{healthMetrics.nutritionPlan.protein}g</div>
                 </div>
                 <div className="bg-background rounded-md p-2">
-                  <div className="text-xs text-muted-foreground">Carbs</div>
-                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.carbs}g</div>
-                </div>
-                <div className="bg-background rounded-md p-2">
                   <div className="text-xs text-muted-foreground">Fats</div>
                   <div className="text-lg font-medium">{healthMetrics.nutritionPlan.fats}g</div>
+                </div>
+                <div className="bg-background rounded-md p-2">
+                  <div className="text-xs text-muted-foreground">Carbs</div>
+                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.carbs}g</div>
                 </div>
               </div>
             </div>

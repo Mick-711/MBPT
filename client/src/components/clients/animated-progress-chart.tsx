@@ -234,41 +234,37 @@ export default function AnimatedProgressChart({
           )}
           
           <div className="mt-4">
-            <div className="grid grid-cols-5 mb-2 text-xs font-medium text-center">
-              <div>Day</div>
-              <div>Calories</div>
-              <div>Protein</div>
-              <div>Fats</div>
-              <div>Carbs</div>
+            <div className="grid grid-cols-5 mb-2 text-xs font-medium">
+              <div className="text-left">Day</div>
+              <div className="text-center">Calories</div>
+              <div className="text-center">Protein</div>
+              <div className="text-center">Fats</div>
+              <div className="text-center">Carbs</div>
             </div>
             
-            {data.slice(-7).map((item: any, index) => {
-              // Get day of week (0 = Sunday, 1 = Monday, etc.)
-              const date = new Date(item.date);
-              const dayOfWeek = date.getDay();
-              // Reorder to start from Monday (Monday = 0, Tuesday = 1, ..., Sunday = 6)
-              const mondayBasedIndex = (dayOfWeek + 6) % 7;
-              
-              // Sort by Monday-based day of week, not by index
-              const sortedData = [...data.slice(-7)].sort((a, b) => {
+            {/* Sort data by day of week, starting from Monday */}
+            {[...data.slice(-7)]
+              .sort((a, b) => {
+                // Convert to Monday-based indexing (Monday=0, Sunday=6)
                 const dayA = (new Date(a.date).getDay() + 6) % 7;
                 const dayB = (new Date(b.date).getDay() + 6) % 7;
                 return dayA - dayB;
-              });
-              
-              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-              const isToday = new Date().toDateString() === date.toDateString();
-              
-              return (
-                <div key={index} className={`grid grid-cols-5 text-center py-1.5 text-xs border-t ${isToday ? 'bg-muted/30' : ''}`}>
-                  <div className="font-medium">{dayName}</div>
-                  <div>{item.calories || '-'}</div>
-                  <div>{item.protein || '-'}g</div>
-                  <div>{item.fats || '-'}g</div>
-                  <div>{item.carbs || '-'}g</div>
-                </div>
-              );
-            })}
+              })
+              .map((item: any, index) => {
+                const date = new Date(item.date);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const isToday = new Date().toDateString() === date.toDateString();
+                
+                return (
+                  <div key={index} className={`grid grid-cols-5 py-1.5 text-xs border-t ${isToday ? 'bg-muted/30' : ''}`}>
+                    <div className="font-medium text-left">{dayName}</div>
+                    <div className="text-center">{item.calories || '-'}</div>
+                    <div className="text-center">{item.protein || '-'}g</div>
+                    <div className="text-center">{item.fats || '-'}g</div>
+                    <div className="text-center">{item.carbs || '-'}g</div>
+                  </div>
+                );
+              })}
           </div>
         </>
       );
