@@ -156,7 +156,15 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/demo" component={React.lazy(() => import('./pages/demo'))} />
+      <Route path="/demo">
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        }>
+          {React.createElement(React.lazy(() => import('./pages/demo')))}
+        </Suspense>
+      </Route>
       <Route path="/" component={(props) => <TrainerRoute component={Dashboard} {...props} />} />
       <Route path="/clients" component={(props) => <TrainerRoute component={ClientsList} {...props} />} />
       <Route path="/clients/:id" component={(props) => <TrainerRoute component={ClientDetails} {...props} />} />
