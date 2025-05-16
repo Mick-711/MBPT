@@ -1,9 +1,9 @@
+import React, { useEffect, useState, Suspense } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
 
 // Layout components
 import Sidebar from "@/components/layout/sidebar";
@@ -20,13 +20,6 @@ import ClientDetails from "@/pages/clients/client-details";
 import WorkoutsList from "@/pages/workouts/index";
 import CreateWorkout from "@/pages/workouts/create";
 
-// These imports will be uncommented when the files are created
-// import NutritionList from "@/pages/nutrition/index";
-// import CreateNutrition from "@/pages/nutrition/create";
-// import Messages from "@/pages/messages";
-// import Subscriptions from "@/pages/subscriptions";
-// import Settings from "@/pages/settings";
-
 // Mobile client pages
 import ClientDashboard from "./pages/mobile/client/dashboard";
 import ClientWorkouts from "./pages/mobile/client/workouts";
@@ -34,6 +27,11 @@ import ClientNutrition from "./pages/mobile/client/nutrition";
 import ClientProgress from "./pages/mobile/client/progress";
 import ClientMessages from "./pages/mobile/client/messages";
 import ClientProfile from "./pages/mobile/client/profile";
+
+// Progress tracking sub-pages
+import ClientPerformance from "./pages/mobile/client/progress/performance";
+import ClientHabits from "./pages/mobile/client/progress/habits";
+import ClientHydration from "./pages/mobile/client/progress/hydration";
 
 // Auth
 import { useAuth } from "@/lib/auth";
@@ -125,12 +123,28 @@ function Router() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        
+        {/* Main navigation routes */}
         <Route path="/" component={(props) => <ClientRoute component={ClientDashboard} {...props} />} />
+        <Route path="/mobile/client/dashboard" component={(props) => <ClientRoute component={ClientDashboard} {...props} />} />
+        <Route path="/mobile/client/workouts" component={(props) => <ClientRoute component={ClientWorkouts} {...props} />} />
+        <Route path="/mobile/client/nutrition" component={(props) => <ClientRoute component={ClientNutrition} {...props} />} />
+        <Route path="/mobile/client/progress" component={(props) => <ClientRoute component={ClientProgress} {...props} />} />
+        <Route path="/mobile/client/messages" component={(props) => <ClientRoute component={ClientMessages} {...props} />} />
+        <Route path="/mobile/client/profile" component={(props) => <ClientRoute component={ClientProfile} {...props} />} />
+        
+        {/* Progress tracking sub-pages */}
+        <Route path="/progress" component={(props) => <ClientRoute component={ClientProgress} {...props} />} />
+        <Route path="/progress/performance" component={(props) => <ClientRoute component={ClientPerformance} {...props} />} />
+        <Route path="/progress/habits" component={(props) => <ClientRoute component={ClientHabits} {...props} />} />
+        <Route path="/progress/hydration" component={(props) => <ClientRoute component={ClientHydration} {...props} />} />
+        
+        {/* Legacy routes for backward compatibility */}
         <Route path="/workouts" component={(props) => <ClientRoute component={ClientWorkouts} {...props} />} />
         <Route path="/nutrition" component={(props) => <ClientRoute component={ClientNutrition} {...props} />} />
-        <Route path="/progress" component={(props) => <ClientRoute component={ClientProgress} {...props} />} />
         <Route path="/messages" component={(props) => <ClientRoute component={ClientMessages} {...props} />} />
         <Route path="/profile" component={(props) => <ClientRoute component={ClientProfile} {...props} />} />
+        
         <Route component={NotFound} />
       </Switch>
     );
