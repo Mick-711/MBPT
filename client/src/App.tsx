@@ -16,6 +16,7 @@ import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ClientsList from "@/pages/clients/index";
+import NewClient from "@/pages/clients/new";
 import ClientDetails from "@/pages/clients/client-details";
 import WorkoutsList from "@/pages/workouts/index";
 import CreateWorkout from "@/pages/workouts/create";
@@ -158,6 +159,7 @@ function Router() {
       <Route path="/" component={(props) => <TrainerRoute component={Dashboard} {...props} />} />
       <Route path="/clients" component={(props) => <TrainerRoute component={ClientsList} {...props} />} />
       <Route path="/clients/:id" component={(props) => <TrainerRoute component={ClientDetails} {...props} />} />
+      <Route path="/clients/new" component={(props) => <TrainerRoute component={NewClient} {...props} />} />
       <Route path="/workouts" component={(props) => <TrainerRoute component={WorkoutsList} {...props} />} />
       <Route path="/workouts/create" component={(props) => <TrainerRoute component={CreateWorkout} {...props} />} />
       {/* 
