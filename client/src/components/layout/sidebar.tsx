@@ -137,10 +137,10 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="sticky bottom-0 p-4 border-t border-sidebar-border bg-sidebar shadow-md">
         <Button 
-          variant="outline"
-          className="w-full flex items-center justify-center"
+          variant="primary"
+          className="w-full flex items-center justify-center hover:bg-primary-600 transition-colors"
           onClick={() => {
             if (typeof window !== 'undefined') {
               window.location.href = '/';
