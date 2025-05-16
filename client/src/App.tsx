@@ -24,6 +24,7 @@ import CreateWorkout from "@/pages/workouts/create";
 import ViewSwitcher from "@/pages/view-switcher";
 import ExercisesLibrary from "@/pages/exercises/index";
 import NewExercise from "@/pages/exercises/new";
+import ImportExercises from "@/pages/exercises/import";
 
 // Mobile client pages
 import ClientDashboard from "./pages/mobile/client/dashboard";
@@ -172,6 +173,7 @@ function Router() {
       {/* Exercise Library routes */}
       <Route path="/exercises" component={ExercisesLibrary} />
       <Route path="/exercises/new" component={NewExercise} />
+      <Route path="/exercises/import" component={ImportExercises} />
       
       <Route component={NotFound} />
     </Switch>

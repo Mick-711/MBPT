@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { addExerciseToStorage } from "@/lib/exerciseStorageHelpers";
 import { Dumbbell, ArrowLeft } from "lucide-react";
 
 import {
@@ -215,28 +216,24 @@ export default function NewExercisePage() {
         : [];
       
       // Create exercise object
-      const newExercise = {
+      const exerciseData = {
         ...data,
-        id: Math.floor(Math.random() * 10000) + 6, // Generate random ID (for demo)
         tags: tagsArray,
+        secondaryMuscleGroups: data.secondaryMuscleGroups || [],
+        videoUrl: data.videoUrl || null,
+        imageUrl: data.imageUrl || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // In a real app, you would send a POST request to your API
-      // await fetch("/api/exercises", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(newExercise),
-      // });
+      // Save to local storage using our helper function
+      const newExercise = addExerciseToStorage(exerciseData);
       
-      // Update cache to include the new exercise
-      queryClient.setQueryData(["exercises"], (oldData: any) => {
-        return oldData ? [...oldData, newExercise] : [newExercise];
-      });
+      // Update React Query cache to include the new exercise
+      queryClient.invalidateQueries({ queryKey: ["exercises"] });
       
       // Show success toast
       toast({

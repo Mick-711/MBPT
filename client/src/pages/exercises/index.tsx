@@ -219,13 +219,20 @@ export default function ExercisesPage() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [viewMode, setViewMode] = useState("grid");
   
-  // Fetch exercises (simulated)
+  // Fetch exercises from local storage
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["exercises"],
     queryFn: async () => {
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return SAMPLE_EXERCISES;
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Get exercises from local storage, initialize with sample data if empty
+      const storedExercises = localStorage.getItem("fitTrainPro_exercises");
+      if (!storedExercises) {
+        localStorage.setItem("fitTrainPro_exercises", JSON.stringify(SAMPLE_EXERCISES));
+        return SAMPLE_EXERCISES;
+      }
+      return JSON.parse(storedExercises);
     }
   });
   
