@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Trophy, Medal, Flame, Gift, Star, Crown } from 'lucide-react';
 
-interface ClientStreakTrackerProps {
+interface TrainerStreakViewProps {
   streakCount: number;
   longestStreak: number;
   totalCompletedDays: number;
@@ -64,16 +64,13 @@ const defaultRewards = [
   }
 ];
 
-export default function ClientStreakTracker({ 
+export default function TrainerStreakView({ 
   streakCount = 5, 
   longestStreak = 12, 
   totalCompletedDays = 23,
   streakDays = [],
   rewards = defaultRewards
-}: ClientStreakTrackerProps) {
-  
-  const [selectedReward, setSelectedReward] = useState<any>(null);
-  const [showRewardDialog, setShowRewardDialog] = useState(false);
+}: TrainerStreakViewProps) {
   
   // Process rewards to update unlocked status based on streak count
   const processedRewards = rewards.map(reward => ({
@@ -98,17 +95,15 @@ export default function ClientStreakTracker({
   
   const displayStreakDays = streakDays.length > 0 ? streakDays : defaultStreakDays;
   
-  // Removed openRewardDetails - achievement celebrations only shown on client view
-  
   return (
     <div>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Flame className="h-5 w-5 mr-2 text-orange-500" />
-            Streak Tracker
+            Client Streak Progress
           </CardTitle>
-          <CardDescription>Track daily habits and earn rewards</CardDescription>
+          <CardDescription>Habit tracking and streak information</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6">
@@ -156,7 +151,7 @@ export default function ClientStreakTracker({
           </div>
           
           <div>
-            <h4 className="text-sm font-medium mb-2">Rewards</h4>
+            <h4 className="text-sm font-medium mb-2">Achievement Progress</h4>
             <div className="grid grid-cols-5 gap-2">
               {processedRewards.map((reward) => (
                 <div
@@ -178,37 +173,12 @@ export default function ClientStreakTracker({
                   <span className="text-xs truncate w-full text-center">
                     {reward.unlocked ? reward.name : `${reward.unlocksAt} days`}
                   </span>
-                </Button>
+                </div>
               ))}
             </div>
           </div>
         </CardContent>
       </Card>
-      
-      {/* Reward Details Dialog */}
-      {selectedReward && (
-        <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center flex flex-col items-center">
-                <div className="mb-4 mt-2">
-                  {selectedReward.icon}
-                </div>
-                <span>{selectedReward.name}</span>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="text-center py-4">
-              <p className="mb-4">{selectedReward.description}</p>
-              <p className="text-sm text-muted-foreground">
-                {selectedReward.unlocked 
-                  ? "You've earned this reward! Keep up the great work." 
-                  : `Continue your streak for ${selectedReward.unlocksAt - streakCount} more days to unlock this reward.`
-                }
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

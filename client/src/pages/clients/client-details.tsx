@@ -14,6 +14,7 @@ import { ClientMessageDialog } from '@/components/clients/client-message-dialog'
 import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dialog';
 import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
 import ClientStreakTracker from '@/components/clients/client-streak-tracker';
+import TrainerStreakView from '@/components/clients/trainer-streak-view';
 import AnimatedProgressChart from '@/components/clients/animated-progress-chart';
 
 export default function ClientDetails() {
@@ -417,8 +418,7 @@ export default function ClientDetails() {
               />
               
               {/* Habit Streak Tracker */}
-              <ClientStreakTracker 
-                clientId={parseInt(id || '0')}
+              <TrainerStreakView 
                 streakCount={14}
                 longestStreak={21}
                 totalCompletedDays={32}
