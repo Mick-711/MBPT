@@ -1,7 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
-
 import { 
   LayoutDashboard, 
   Users, 
@@ -46,11 +44,15 @@ const SidebarItem = ({ icon, label, href, active, badge }: SidebarItemProps) => 
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user, logout } = useAuth();
   
-  if (!user) return null;
+  // For demo purposes, use a static user
+  const demoUser = {
+    fullName: "Demo Trainer",
+    role: "trainer" as const,
+    id: 1
+  };
   
-  const initials = user.fullName
+  const initials = demoUser.fullName
     .split(" ")
     .map(name => name[0])
     .join("")
@@ -80,8 +82,8 @@ export default function Sidebar() {
               <span className="font-semibold text-primary-700 dark:text-primary-200">{initials}</span>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">{user.fullName}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">{demoUser.fullName}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{demoUser.role}</p>
             </div>
           </div>
         </div>
@@ -91,44 +93,40 @@ export default function Sidebar() {
             <SidebarItem
               icon={<LayoutDashboard size={18} />}
               label="Dashboard"
-              href="/"
-              active={location === "/"}
+              href="/trainer/dashboard"
+              active={location === "/trainer/dashboard" || location === "/trainer"}
             />
-            {user.role === "trainer" && (
-              <>
-                <SidebarItem
-                  icon={<Users size={18} />}
-                  label="Clients"
-                  href="/clients"
-                  active={location.startsWith("/clients")}
-                />
-                <SidebarItem
-                  icon={<Dumbbell size={18} />}
-                  label="Workouts"
-                  href="/workouts"
-                  active={location.startsWith("/workouts")}
-                />
-                <SidebarItem
-                  icon={<Utensils size={18} />}
-                  label="Nutrition"
-                  href="/nutrition"
-                  active={location.startsWith("/nutrition")}
-                />
-                <SidebarItem
-                  icon={<MessageSquare size={18} />}
-                  label="Messages"
-                  href="/messages"
-                  active={location === "/messages"}
-                  badge={4}
-                />
-                <SidebarItem
-                  icon={<Coins size={18} />}
-                  label="Subscriptions"
-                  href="/subscriptions"
-                  active={location === "/subscriptions"}
-                />
-              </>
-            )}
+            <SidebarItem
+              icon={<Users size={18} />}
+              label="Clients"
+              href="/clients"
+              active={location.startsWith("/clients")}
+            />
+            <SidebarItem
+              icon={<Dumbbell size={18} />}
+              label="Workouts"
+              href="/workouts"
+              active={location.startsWith("/workouts")}
+            />
+            <SidebarItem
+              icon={<Utensils size={18} />}
+              label="Nutrition"
+              href="/nutrition"
+              active={location.startsWith("/nutrition")}
+            />
+            <SidebarItem
+              icon={<MessageSquare size={18} />}
+              label="Messages"
+              href="/messages"
+              active={location === "/messages"}
+              badge={4}
+            />
+            <SidebarItem
+              icon={<Coins size={18} />}
+              label="Subscriptions"
+              href="/subscriptions"
+              active={location === "/subscriptions"}
+            />
             <SidebarItem
               icon={<Settings size={18} />}
               label="Settings"
@@ -143,10 +141,14 @@ export default function Sidebar() {
         <Button 
           variant="outline"
           className="w-full flex items-center justify-center"
-          onClick={() => logout()}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/';
+            }
+          }}
         >
           <LogOut size={16} className="mr-2" />
-          Logout
+          Back to Selector
         </Button>
       </div>
     </div>
