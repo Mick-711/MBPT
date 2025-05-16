@@ -66,11 +66,11 @@ export default function Login() {
       
       // Wait briefly for the auth state to update
       setTimeout(() => {
-        // Force redirection after successful login
+        // Use the setLocation from wouter instead of window.location for proper routing
         if (userRole === "client") {
-          window.location.href = "/mobile/client/dashboard";
+          setLocation("/mobile/client/dashboard");
         } else {
-          window.location.href = "/";
+          setLocation("/");
         }
       }, 500);
     } catch (err: any) {
