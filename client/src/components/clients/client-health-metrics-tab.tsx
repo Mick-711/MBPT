@@ -192,7 +192,7 @@ export default function ClientHealthMetricsTab({ client }) {
             <CardHeader>
               <CardTitle>Client Goals</CardTitle>
               <CardDescription>
-                Current targets and achievements for {client.name}
+                Current targets and achievements for {client?.name || 'this client'}
               </CardDescription>
             </CardHeader>
             <CardContent>
