@@ -8,7 +8,7 @@ import {
   Subscription, InsertSubscription
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, isNull, ne, asc, inArray } from "drizzle-orm";
+import { eq, or, and, desc, asc, isNull, ne, inArray } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import { z } from "zod";
 
