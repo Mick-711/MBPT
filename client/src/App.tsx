@@ -183,8 +183,13 @@ function App() {
   // For simplicity, we'll consider all routes under /mobile as client app routes
   const isClientMobileApp = location.startsWith("/mobile");
   
-  // For trainer dashboard, we'll consider all other routes except special pages
-  const isTrainerDashboard = !isClientMobileApp && !isSpecialPage;
+  // These are all the routes that should have the trainer dashboard layout
+  const isTrainerDashboard = location.startsWith("/trainer") || 
+                           location === "/clients" || 
+                           location.startsWith("/clients/") || 
+                           (location === "/workouts" && !location.startsWith("/mobile")) || 
+                           location.startsWith("/workouts/") ||
+                           !isClientMobileApp && !isSpecialPage;
   
   // Read from localStorage to initialize global flag as fallback
   try {
