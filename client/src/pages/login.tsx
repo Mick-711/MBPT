@@ -63,10 +63,15 @@ export default function Login() {
     
     try {
       await login(values.email, values.password);
-      setLocation("/");
+      
+      // Force redirection after successful login
+      if (userRole === "client") {
+        window.location.href = "/mobile/client/dashboard";
+      } else {
+        window.location.href = "/";
+      }
     } catch (err: any) {
       setError(err.message || "Failed to login. Please check your credentials.");
-    } finally {
       setIsLoading(false);
     }
   };
