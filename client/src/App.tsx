@@ -180,21 +180,24 @@ function App() {
   // Don't show layout on login/register pages or the view switcher page
   const isSpecialPage = location === "/login" || location === "/register" || location === "/";
   
-  // Check if we're in the client mobile app section
-  const isClientMobileApp = location.startsWith("/mobile/client") || 
-                           location === "/progress" || 
-                           location.startsWith("/progress/") || 
-                           location === "/workouts" || 
-                           location === "/nutrition" || 
-                           location === "/messages" || 
-                           location === "/profile";
-
-  // Check if we're in the trainer dashboard
-  const isTrainerDashboard = location.startsWith("/trainer") || 
-                            location === "/clients" || 
-                            location.startsWith("/clients/") ||
-                            location === "/workouts" || 
-                            location.startsWith("/workouts/");
+  // For simplicity, we'll consider all routes under /mobile as client app routes
+  const isClientMobileApp = location.startsWith("/mobile");
+  
+  // For trainer dashboard, we'll consider all other routes except special pages
+  const isTrainerDashboard = !isClientMobileApp && !isSpecialPage;
+  
+  // Read from localStorage to initialize global flag as fallback
+  try {
+    if (typeof window !== 'undefined') {
+      if (isClientMobileApp) {
+        window.IS_TRAINER_VIEW = false;
+      } else if (isTrainerDashboard) {
+        window.IS_TRAINER_VIEW = true;
+      }
+    }
+  } catch (e) {
+    console.error('Could not set trainer view flag', e);
+  }
 
   if (isLoading) {
     return (

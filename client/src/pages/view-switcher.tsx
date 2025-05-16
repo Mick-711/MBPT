@@ -7,14 +7,24 @@ export default function ViewSwitcher() {
   const [_, setLocation] = useLocation();
 
   const goToTrainerView = () => {
-    // Set the global flag for trainer view
-    window.IS_TRAINER_VIEW = true;
+    // Set the global flag for trainer view - add fallback for browsers
+    try {
+      window.IS_TRAINER_VIEW = true;
+      localStorage.setItem('IS_TRAINER_VIEW', 'true');
+    } catch (e) {
+      console.error('Could not set trainer view flag', e);
+    }
     setLocation('/trainer/dashboard');
   };
 
   const goToClientView = () => {
-    // Set the global flag for client view
-    window.IS_TRAINER_VIEW = false;
+    // Set the global flag for client view - add fallback for browsers
+    try {
+      window.IS_TRAINER_VIEW = false;
+      localStorage.setItem('IS_TRAINER_VIEW', 'false');
+    } catch (e) {
+      console.error('Could not set client view flag', e);
+    }
     setLocation('/mobile/client/dashboard');
   };
 
