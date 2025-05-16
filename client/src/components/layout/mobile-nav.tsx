@@ -99,14 +99,15 @@ interface NavItemProps {
 
 function NavItem({ icon, label, href, active, hasNotification }: NavItemProps) {
   return (
-    <Link href={href}>
-      <a className={`flex flex-col items-center p-2 relative ${active ? "text-primary mobile-nav-active" : "text-gray-500 dark:text-gray-400"}`}>
-        <div className="text-xl">{icon}</div>
-        <span className="text-xs mt-1">{label}</span>
-        {hasNotification && (
-          <span className="absolute top-1 right-7 h-2 w-2 bg-destructive rounded-full"></span>
-        )}
-      </a>
+    <Link 
+      href={href}
+      className={`flex flex-col items-center p-2 relative ${active ? "text-primary mobile-nav-active" : "text-gray-500 dark:text-gray-400"}`}
+    >
+      <div className="text-xl">{icon}</div>
+      <span className="text-xs mt-1">{label}</span>
+      {hasNotification && (
+        <span className="absolute top-1 right-7 h-2 w-2 bg-destructive rounded-full"></span>
+      )}
     </Link>
   );
 }

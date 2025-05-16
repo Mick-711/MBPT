@@ -23,24 +23,23 @@ interface SidebarItemProps {
 
 const SidebarItem = ({ icon, label, href, active, badge }: SidebarItemProps) => (
   <li className="mb-1 px-3">
-    <Link href={href}>
-      <a
-        className={`flex items-center py-2 px-3 rounded-lg font-medium ${
-          active
-            ? "text-gray-900 bg-primary-50 dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
-            : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
-        }`}
-      >
-        <span className={`mr-3 ${active ? "text-primary-500" : "text-gray-500 dark:text-gray-400"}`}>
-          {icon}
+    <Link 
+      href={href}
+      className={`flex items-center py-2 px-3 rounded-lg font-medium ${
+        active
+          ? "text-gray-900 bg-primary-50 dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
+          : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+      }`}
+    >
+      <span className={`mr-3 ${active ? "text-primary-500" : "text-gray-500 dark:text-gray-400"}`}>
+        {icon}
+      </span>
+      {label}
+      {badge ? (
+        <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full">
+          {badge}
         </span>
-        {label}
-        {badge ? (
-          <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full">
-            {badge}
-          </span>
-        ) : null}
-      </a>
+      ) : null}
     </Link>
   </li>
 );

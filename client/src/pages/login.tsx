@@ -194,10 +194,8 @@ export default function Login() {
               </div>
               <div>
                 Don't have an account?{" "}
-                <Link href="/register">
-                  <a className="font-medium text-primary hover:underline">
-                    Sign up
-                  </a>
+                <Link href="/register" className="font-medium text-primary hover:underline">
+                  Sign up
                 </Link>
               </div>
             </div>

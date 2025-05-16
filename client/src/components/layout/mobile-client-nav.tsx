@@ -51,22 +51,18 @@ export default function MobileClientNav() {
           <Link 
             key={item.name} 
             href={item.href}
-            className="flex flex-col items-center justify-center"
+            className={`flex flex-col items-center justify-center p-1 ${
+              item.active 
+                ? 'text-primary' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
-            <div 
-              className={`p-1 rounded-full ${
-                item.active 
-                  ? 'text-primary' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-            </div>
+            <item.icon className="h-5 w-5" />
             <span 
               className={`text-[10px] mt-1 ${
                 item.active 
-                  ? 'font-medium text-primary' 
-                  : 'text-muted-foreground'
+                  ? 'font-medium' 
+                  : ''
               }`}
             >
               {item.name}
