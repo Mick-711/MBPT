@@ -6,13 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft, Heart } from 'lucide-react';
+import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft, Heart, Star, Trophy, Medal, Award } from 'lucide-react';
 import ClientHealthMetricsTab from '@/components/clients/client-health-metrics-tab';
 import { EditProfileDialog } from '@/components/clients/edit-profile-dialog';
 import { EditNotesDialog } from '@/components/clients/edit-notes-dialog';
 import { ClientMessageDialog } from '@/components/clients/client-message-dialog';
 import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dialog';
 import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
+import ClientStreakTracker from '@/components/clients/client-streak-tracker';
+import AnimatedProgressChart from '@/components/clients/animated-progress-chart';
 
 export default function ClientDetails() {
   const { id } = useParams();
@@ -380,6 +382,90 @@ export default function ClientDetails() {
 
             <TabsContent value="health" className="space-y-6">
               <ClientHealthMetricsTab clientId={parseInt(id || '0')} />
+              
+              {/* Animated Progress Chart */}
+              <AnimatedProgressChart 
+                clientId={parseInt(id || '0')}
+                weightData={[
+                  { date: "Jan 01", value: 82, goal: 75 },
+                  { date: "Jan 08", value: 81, goal: 75 },
+                  { date: "Jan 15", value: 80, goal: 75 },
+                  { date: "Jan 22", value: 79, goal: 75 },
+                  { date: "Jan 29", value: 78, goal: 75 },
+                  { date: "Feb 05", value: 77, goal: 75 },
+                  { date: "Feb 12", value: 76.5, goal: 75 }
+                ]}
+                workoutData={[
+                  { date: "Jan 01", value: 3, goal: 4 },
+                  { date: "Jan 08", value: 4, goal: 4 },
+                  { date: "Jan 15", value: 3, goal: 4 },
+                  { date: "Jan 22", value: 5, goal: 4 },
+                  { date: "Jan 29", value: 4, goal: 4 },
+                  { date: "Feb 05", value: 4, goal: 4 },
+                  { date: "Feb 12", value: 5, goal: 4 }
+                ]}
+                nutritionData={[
+                  { date: "Jan 01", value: 65, goal: 80 },
+                  { date: "Jan 08", value: 70, goal: 80 },
+                  { date: "Jan 15", value: 75, goal: 80 },
+                  { date: "Jan 22", value: 72, goal: 80 },
+                  { date: "Jan 29", value: 78, goal: 80 },
+                  { date: "Feb 05", value: 82, goal: 80 },
+                  { date: "Feb 12", value: 85, goal: 80 }
+                ]}
+                streakCount={14}
+              />
+              
+              {/* Habit Streak Tracker */}
+              <ClientStreakTracker 
+                clientId={parseInt(id || '0')}
+                streakCount={14}
+                longestStreak={21}
+                totalCompletedDays={32}
+                streakDays={[
+                  { date: "Mon 06", completed: true, activities: ["Morning Workout", "Nutrition Plan"] },
+                  { date: "Tue 07", completed: true, activities: ["Cardio Session", "Meal Prep"] },
+                  { date: "Wed 08", completed: true, activities: ["Rest Day", "Nutrition Plan"] },
+                  { date: "Thu 09", completed: true, activities: ["Strength Training", "Recovery"] },
+                  { date: "Fri 10", completed: true, activities: ["HIIT Workout", "Nutrition Plan"] },
+                  { date: "Sat 11", completed: true, activities: ["Yoga Session", "Meal Prep"] },
+                  { date: "Sun 12", completed: true, activities: ["Active Recovery", "Nutrition Plan"] }
+                ]}
+                rewards={[
+                  { 
+                    id: 1, 
+                    name: "7-Day Streak", 
+                    description: "Completed activities for 7 days in a row", 
+                    icon: <Star className="h-6 w-6" />, 
+                    unlocked: true, 
+                    unlocksAt: 7 
+                  },
+                  { 
+                    id: 2, 
+                    name: "14-Day Streak", 
+                    description: "Completed activities for 14 days in a row", 
+                    icon: <Award className="h-6 w-6" />, 
+                    unlocked: true, 
+                    unlocksAt: 14 
+                  },
+                  { 
+                    id: 3, 
+                    name: "30-Day Streak", 
+                    description: "Completed activities for 30 days in a row", 
+                    icon: <Trophy className="h-6 w-6" />, 
+                    unlocked: false, 
+                    unlocksAt: 30 
+                  },
+                  { 
+                    id: 4, 
+                    name: "100-Day Streak", 
+                    description: "Completed activities for 100 days in a row", 
+                    icon: <Medal className="h-6 w-6" />, 
+                    unlocked: false, 
+                    unlocksAt: 100 
+                  }
+                ]}
+              />
             </TabsContent>
 
             <TabsContent value="workouts" className="space-y-6">
