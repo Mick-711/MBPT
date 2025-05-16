@@ -20,6 +20,7 @@ import NewClient from "@/pages/clients/new";
 import ClientDetails from "@/pages/clients/client-details";
 import WorkoutsList from "@/pages/workouts/index";
 import CreateWorkout from "@/pages/workouts/create";
+import ViewSwitcher from "@/pages/view-switcher";
 
 // Mobile client pages
 import ClientDashboard from "./pages/mobile/client/dashboard";
@@ -118,42 +119,12 @@ function Router() {
   const extendedUser = user as User | null;
   const isMobile = useMobile();
 
-  // Direct clients to their mobile interface
-  if (extendedUser?.role === "client" && isMobile) {
-    return (
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        
-        {/* Main navigation routes */}
-        <Route path="/" component={(props) => <ClientRoute component={ClientDashboard} {...props} />} />
-        <Route path="/mobile/client/dashboard" component={(props) => <ClientRoute component={ClientDashboard} {...props} />} />
-        <Route path="/mobile/client/workouts" component={(props) => <ClientRoute component={ClientWorkouts} {...props} />} />
-        <Route path="/mobile/client/nutrition" component={(props) => <ClientRoute component={ClientNutrition} {...props} />} />
-        <Route path="/mobile/client/progress" component={(props) => <ClientRoute component={ClientProgress} {...props} />} />
-        <Route path="/mobile/client/messages" component={(props) => <ClientRoute component={ClientMessages} {...props} />} />
-        <Route path="/mobile/client/profile" component={(props) => <ClientRoute component={ClientProfile} {...props} />} />
-        
-        {/* Progress tracking sub-pages */}
-        <Route path="/progress" component={(props) => <ClientRoute component={ClientProgress} {...props} />} />
-        <Route path="/progress/performance" component={(props) => <ClientRoute component={ClientPerformance} {...props} />} />
-        <Route path="/progress/habits" component={(props) => <ClientRoute component={ClientHabits} {...props} />} />
-        <Route path="/progress/hydration" component={(props) => <ClientRoute component={ClientHydration} {...props} />} />
-        
-        {/* Legacy routes for backward compatibility */}
-        <Route path="/workouts" component={(props) => <ClientRoute component={ClientWorkouts} {...props} />} />
-        <Route path="/nutrition" component={(props) => <ClientRoute component={ClientNutrition} {...props} />} />
-        <Route path="/messages" component={(props) => <ClientRoute component={ClientMessages} {...props} />} />
-        <Route path="/profile" component={(props) => <ClientRoute component={ClientProfile} {...props} />} />
-        
-        <Route component={NotFound} />
-      </Switch>
-    );
-  }
-
-  // Trainer/admin routes or desktop client view
+  // For demo purposes, provide direct access to both views through a selector page
   return (
     <Switch>
+      {/* Main view selector for demo purposes */}
+      <Route path="/" component={ViewSwitcher} />
+      
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/demo">
@@ -165,20 +136,35 @@ function Router() {
           {React.createElement(React.lazy(() => import('./pages/demo')))}
         </Suspense>
       </Route>
-      <Route path="/" component={(props) => <TrainerRoute component={Dashboard} {...props} />} />
-      <Route path="/clients" component={(props) => <TrainerRoute component={ClientsList} {...props} />} />
-      <Route path="/clients/:id" component={(props) => <TrainerRoute component={ClientDetails} {...props} />} />
-      <Route path="/clients/new" component={(props) => <TrainerRoute component={NewClient} {...props} />} />
-      <Route path="/workouts" component={(props) => <TrainerRoute component={WorkoutsList} {...props} />} />
-      <Route path="/workouts/create" component={(props) => <TrainerRoute component={CreateWorkout} {...props} />} />
-      {/* 
-      Uncomment these routes when the components are created
-      <Route path="/nutrition" component={(props) => <TrainerRoute component={NutritionList} {...props} />} />
-      <Route path="/nutrition/create" component={(props) => <TrainerRoute component={CreateNutrition} {...props} />} />
-      <Route path="/messages" component={(props) => <AuthenticatedRoute component={Messages} {...props} />} />
-      <Route path="/subscriptions" component={(props) => <TrainerRoute component={Subscriptions} {...props} />} />
-      <Route path="/settings" component={(props) => <AuthenticatedRoute component={Settings} {...props} />} />
-      */}
+      
+      {/* Client routes */}
+      <Route path="/mobile/client/dashboard" component={ClientDashboard} />
+      <Route path="/mobile/client/workouts" component={ClientWorkouts} />
+      <Route path="/mobile/client/nutrition" component={ClientNutrition} />
+      <Route path="/mobile/client/progress" component={ClientProgress} />
+      <Route path="/mobile/client/messages" component={ClientMessages} />
+      <Route path="/mobile/client/profile" component={ClientProfile} />
+      
+      {/* Progress tracking sub-pages */}
+      <Route path="/progress" component={ClientProgress} />
+      <Route path="/progress/performance" component={ClientPerformance} />
+      <Route path="/progress/habits" component={ClientHabits} />
+      <Route path="/progress/hydration" component={ClientHydration} />
+      
+      {/* Legacy client routes for backward compatibility */}
+      <Route path="/workouts" component={ClientWorkouts} />
+      <Route path="/nutrition" component={ClientNutrition} />
+      <Route path="/messages" component={ClientMessages} />
+      <Route path="/profile" component={ClientProfile} />
+      
+      {/* Trainer routes */}
+      <Route path="/trainer/dashboard" component={Dashboard} />
+      <Route path="/clients" component={ClientsList} />
+      <Route path="/clients/:id" component={ClientDetails} />
+      <Route path="/clients/new" component={NewClient} />
+      <Route path="/trainer/workouts" component={WorkoutsList} />
+      <Route path="/trainer/workouts/create" component={CreateWorkout} />
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -190,11 +176,22 @@ function App() {
   const isMobile = useMobile();
   const [location] = useLocation();
 
-  // Don't show layout on login/register pages
-  const isAuthPage = location === "/login" || location === "/register";
+  // Don't show layout on login/register pages or the view switcher page
+  const isSpecialPage = location === "/login" || location === "/register" || location === "/";
   
-  // Determine if we're in the mobile client app
-  const isClientMobileApp = isMobile && extendedUser?.role === "client";
+  // Check if we're in the client mobile app section
+  const isClientMobileApp = location.startsWith("/mobile/client") || 
+                           location === "/progress" || 
+                           location.startsWith("/progress/") || 
+                           location === "/workouts" || 
+                           location === "/nutrition" || 
+                           location === "/messages" || 
+                           location === "/profile";
+
+  // Check if we're in the trainer dashboard
+  const isTrainerDashboard = location.startsWith("/trainer") || 
+                            location === "/clients" || 
+                            location.startsWith("/clients/");
 
   if (isLoading) {
     return (
@@ -204,7 +201,8 @@ function App() {
     );
   }
   
-  if (!isAuthenticated || isAuthPage) {
+  // For login, register, or view switcher page
+  if (isSpecialPage) {
     return (
       <TooltipProvider>
         <Toaster />
@@ -215,6 +213,11 @@ function App() {
 
   // For mobile client app, show client mobile nav
   if (isClientMobileApp) {
+    // When we enter the client section, set the flag for client view
+    if (typeof window !== 'undefined') {
+      window.IS_TRAINER_VIEW = false;
+    }
+    
     return (
       <TooltipProvider>
         <Toaster />
@@ -227,16 +230,31 @@ function App() {
   }
 
   // For trainer web app, show sidebar and navigation
+  if (isTrainerDashboard) {
+    // When we enter the trainer section, set the flag for trainer view
+    if (typeof window !== 'undefined') {
+      window.IS_TRAINER_VIEW = true;
+    }
+    
+    return (
+      <TooltipProvider>
+        <Toaster />
+        <div className="min-h-screen flex flex-col md:flex-row">
+          {!isMobile && <Sidebar />}
+          <div className="flex-1 flex flex-col min-h-screen">
+            <Router />
+            {isMobile && <MobileNav />}
+          </div>
+        </div>
+      </TooltipProvider>
+    );
+  }
+  
+  // Default case
   return (
     <TooltipProvider>
       <Toaster />
-      <div className="min-h-screen flex flex-col md:flex-row">
-        {!isMobile && <Sidebar />}
-        <div className="flex-1 flex flex-col min-h-screen">
-          <Router />
-          {isMobile && <MobileNav />}
-        </div>
-      </div>
+      <Router />
     </TooltipProvider>
   );
 }
