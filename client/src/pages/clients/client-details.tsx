@@ -13,25 +13,122 @@ export default function ClientDetails() {
   const { id } = useParams();
   const [, navigate] = useLocation();
 
-  const { data: client, isLoading } = useQuery({
-    queryKey: [`/api/clients/${id}`],
-    staleTime: 1000 * 60, // 1 minute
-  });
-
-  const { data: workoutPlans, isLoading: isLoadingWorkouts } = useQuery({
-    queryKey: [`/api/clients/${id}/workout-plans`],
-    staleTime: 1000 * 60, // 1 minute
-  });
-
-  const { data: nutritionPlans, isLoading: isLoadingNutrition } = useQuery({
-    queryKey: [`/api/clients/${id}/nutrition-plans`],
-    staleTime: 1000 * 60, // 1 minute
-  });
-
-  const { data: progressRecords, isLoading: isLoadingProgress } = useQuery({
-    queryKey: [`/api/clients/${id}/progress`],
-    staleTime: 1000 * 60, // 1 minute
-  });
+  // Use static data for the sample client profile
+  const isLoading = false;
+  const isLoadingWorkouts = false;
+  const isLoadingNutrition = false;
+  const isLoadingProgress = false;
+  
+  // Mock data for client
+  const client = {
+    id: parseInt(id || '1'),
+    fullName: "Mick Smith",
+    email: "mick.711@hotmail.com",
+    profileImage: null,
+    height: 175,
+    weight: 78.6,
+    goals: "Lose weight and increase muscle tone. Looking to drop 5 kg by summer while improving core strength.",
+    healthInfo: "No major health issues. Mild knee pain during heavy squats. Taking daily multivitamin supplements.",
+    subscription: "Premium",
+    joinedDate: "Feb 17, 2025",
+    notes: "Highly motivated client. Responds well to positive reinforcement. Prefers morning workouts.",
+    activities: [
+      {
+        type: 'workout',
+        title: 'Completed Workout',
+        date: 'May 14, 2025',
+        description: 'Finished full upper body routine with 3 additional sets'
+      },
+      {
+        type: 'nutrition',
+        title: 'Followed Meal Plan',
+        date: 'May 13, 2025',
+        description: 'Hit daily macros with 95% compliance'
+      },
+      {
+        type: 'progress',
+        title: 'New Measurement',
+        date: 'May 12, 2025',
+        description: 'Lost 0.5kg since last week'
+      }
+    ],
+    upcomingSessions: [
+      {
+        title: 'One-on-One Training',
+        date: 'May 18, 2025',
+        time: '7:30 AM'
+      },
+      {
+        title: 'Monthly Assessment',
+        date: 'May 24, 2025',
+        time: '9:00 AM'
+      }
+    ]
+  };
+  
+  // Mock data for workout plans
+  const workoutPlans = [
+    {
+      id: 1,
+      name: 'Weight Loss Program',
+      status: 'Active',
+      description: 'High-intensity program designed for maximum calorie burn with progressive strength components.',
+      startDate: 'Apr 1, 2025',
+      endDate: 'Jun 30, 2025',
+      workouts: [
+        { id: 1, name: 'Upper Body Push', day: 1, exerciseCount: 6 },
+        { id: 2, name: 'Lower Body', day: 2, exerciseCount: 7 },
+        { id: 3, name: 'Upper Body Pull', day: 4, exerciseCount: 6 },
+        { id: 4, name: 'HIIT Cardio', day: 5, exerciseCount: 5 }
+      ]
+    }
+  ];
+  
+  // Mock data for nutrition plans
+  const nutritionPlans = [
+    {
+      id: 1,
+      name: 'Fat Loss Nutrition Plan',
+      status: 'Active',
+      description: 'Calorie-controlled nutrition plan with higher protein for muscle preservation.',
+      startDate: 'Apr 1, 2025',
+      endDate: 'Jun 30, 2025',
+      dailyCalories: 1900,
+      protein: 150,
+      carbs: 180,
+      fat: 60
+    }
+  ];
+  
+  // Mock data for progress records
+  const progressRecords = [
+    {
+      id: 1,
+      date: 'May 10, 2025',
+      weight: 78.6,
+      bodyFat: 21.6,
+      muscleMass: 37.8,
+      measurements: {
+        chest: 94,
+        waist: 84,
+        hips: 98
+      },
+      notes: 'Significant progress in core strength and posture.'
+    },
+    {
+      id: 2,
+      date: 'Apr 12, 2025',
+      weight: 80.0,
+      bodyFat: 22.8,
+      muscleMass: 37.0,
+      measurements: {
+        chest: 95,
+        waist: 86,
+        hips: 99
+      },
+      notes: 'Increased cardio endurance. Able to run 5k without stopping.'
+    }
+  ];
 
   if (isLoading) {
     return (

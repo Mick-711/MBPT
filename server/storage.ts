@@ -21,15 +21,18 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User>;
   updateUserStripeInfo(id: number, data: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
+  getUsers(role?: string): Promise<User[]>;
   
   // Trainer operations
   getTrainerProfile(userId: number): Promise<TrainerProfile | undefined>;
   createTrainerProfile(profile: InsertTrainerProfile): Promise<TrainerProfile>;
   updateTrainerProfile(userId: number, data: Partial<TrainerProfile>): Promise<TrainerProfile>;
-  getTrainerClients(trainerId: number): Promise<ClientProfile[]>;
+  getTrainerClients(trainerId: number): Promise<(ClientProfile & { user: User })[]>;
   
   // Client operations
   getClientProfile(userId: number): Promise<ClientProfile | undefined>;
+  getClientProfileById(id: number): Promise<(ClientProfile & { user: User }) | undefined>;
+  getAllClients(): Promise<(ClientProfile & { user: User })[]>;
   createClientProfile(profile: InsertClientProfile): Promise<ClientProfile>;
   updateClientProfile(userId: number, data: Partial<ClientProfile>): Promise<ClientProfile>;
   assignClientToTrainer(clientId: number, trainerId: number): Promise<ClientProfile>;
@@ -114,7 +117,33 @@ export interface IStorage {
   updateTask(id: number, data: Partial<Task>): Promise<Task>;
   completeTask(id: number): Promise<Task>;
   deleteTask(id: number): Promise<void>;
+  
+  // Dashboard operations
+  getDashboardStats(trainerId: number): Promise<any>;
+  getHealthMetrics(trainerId: number): Promise<any>;
 }
+
+import { db } from "./db";
+import { eq, and, desc, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import * as schema from "@shared/schema";
+import { 
+  User, InsertUser,
+  TrainerProfile, InsertTrainerProfile,
+  ClientProfile, InsertClientProfile,
+  Subscription, InsertSubscription,
+  WorkoutPlan, InsertWorkoutPlan,
+  Workout, InsertWorkout,
+  Exercise, InsertExercise,
+  WorkoutExercise, InsertWorkoutExercise,
+  NutritionPlan, InsertNutritionPlan,
+  Meal, InsertMeal,
+  ProgressRecord, InsertProgressRecord,
+  ProgressPhoto, InsertProgressPhoto,
+  Message, InsertMessage,
+  ClientActivity, InsertClientActivity,
+  Task, InsertTask,
+} from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
   // User operations
