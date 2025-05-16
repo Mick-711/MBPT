@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Heart, Award, Trophy, Target, TrendingUp, Zap } from 'lucide-react';
+import { Heart, Award, Trophy, Target, TrendingUp, Zap, LineChart } from 'lucide-react';
 import ClientStreakTracker from './client-streak-tracker';
 import AnimatedProgressChart from './animated-progress-chart';
 import { ProgressCelebration } from './progress-celebration';
+import WeightTrendChart from './weight-trend-chart';
 
 // Mock data for the client's health metrics
 const healthMetrics = {
@@ -16,10 +17,18 @@ const healthMetrics = {
   longestStreak: 12,
   totalWorkoutDays: 23,
   weightHistory: [
+    { date: '2025-03-27', value: 81.3 },
+    { date: '2025-03-29', value: 81.0 },
+    { date: '2025-04-02', value: 80.7 },
+    { date: '2025-04-06', value: 80.4 },
     { date: '2025-04-10', value: 80.5 },
+    { date: '2025-04-13', value: 80.0 },
     { date: '2025-04-17', value: 79.8 },
+    { date: '2025-04-20', value: 79.5 },
     { date: '2025-04-24', value: 79.2 },
+    { date: '2025-04-27', value: 79.0 },
     { date: '2025-05-01', value: 78.9 },
+    { date: '2025-05-04', value: 78.8 },
     { date: '2025-05-08', value: 78.6 }
   ],
   workoutCompletion: [
@@ -133,6 +142,16 @@ export default function ClientHealthMetricsTab({ client }) {
               data={healthMetrics.nutritionAdherence}
               animate={animate}
               goal={100}
+            />
+          </div>
+          
+          <div className="mt-6">
+            <h3 className="text-lg font-medium mb-3 flex items-center">
+              <LineChart className="text-blue-500 mr-2 h-5 w-5" />
+              Weight Trend Analysis
+            </h3>
+            <WeightTrendChart 
+              weightData={healthMetrics.weightHistory}
             />
           </div>
         </TabsContent>
