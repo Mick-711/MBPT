@@ -15,6 +15,7 @@ import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dia
 import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
 import TrainerStreakView from '@/components/clients/trainer-streak-view';
 import AnimatedProgressChart from '@/components/clients/animated-progress-chart';
+import { ClientExerciseRecommendations } from '@/components/clients/client-exercise-recommendations';
 
 // Global context to disable confetti/celebrations in trainer views
 window.IS_TRAINER_VIEW = true;
@@ -242,7 +243,7 @@ export default function ClientDetails() {
 
         <div className="md:w-2/3">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid grid-cols-6 mb-8">
+            <TabsList className="grid grid-cols-7 mb-8">
               <TabsTrigger value="overview" className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -254,6 +255,10 @@ export default function ClientDetails() {
               <TabsTrigger value="workouts" className="flex items-center">
                 <Dumbbell className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Workouts</span>
+              </TabsTrigger>
+              <TabsTrigger value="exercises" className="flex items-center">
+                <Trophy className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Exercises</span>
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="flex items-center">
                 <Pizza className="mr-2 h-4 w-4" />
