@@ -10,6 +10,9 @@ import {
   Users,
   Trophy
 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import StatCard from "@/components/dashboard/stat-card";
 import ClientActivity from "@/components/dashboard/client-activity";
 import ClientProgress from "@/components/dashboard/client-progress";
@@ -17,8 +20,6 @@ import TaskList from "@/components/dashboard/task-list";
 import MessagePreview from "@/components/dashboard/message-preview";
 import AIAssistant from "@/components/dashboard/ai-assistant";
 import QuickActions from "@/components/dashboard/quick-actions";
-import ClientPerformanceChart from "@/components/dashboard/client-performance-chart";
-import ClientHealthMetrics from "@/components/dashboard/client-health-metrics";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -156,16 +157,77 @@ export default function Dashboard() {
           <QuickActions />
         </div>
 
-        {/* Health metrics */}
+        {/* Client Section with Create Client CTA */}
         <div className="mb-6">
-          <ClientHealthMetrics />
-        </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-display font-semibold text-gray-900 dark:text-gray-100">
+                  Recent Clients
+                </h2>
+                <Link href="/clients/new">
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add New Client
+                  </Button>
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Sample client card for Mick */}
+                <Link href="/clients/2" className="block">
+                  <div className="border rounded-lg p-4 hover:border-primary hover:shadow-sm transition-all">
+                    <div className="flex items-center mb-3">
+                      <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 font-medium">
+                        MS
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="font-medium">Mick Smith</h3>
+                        <p className="text-xs text-muted-foreground">mick.711@hotmail.com</p>
+                      </div>
+                      <span className="ml-auto px-2 py-1 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
+                        Active
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-3 text-center text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs">Weight</p>
+                        <p className="font-medium">78.6 kg</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Program</p>
+                        <p className="font-medium">Weight Loss</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Progress</p>
+                        <p className="font-medium">75%</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                
+                <div className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center hover:border-primary hover:bg-primary-50 dark:hover:bg-primary-950/20 transition-all">
+                  <Link href="/clients/new" className="flex flex-col items-center text-center p-4">
+                    <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 mb-2">
+                      <UserPlus className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-medium mt-2">Add New Client</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Create a new client profile
+                    </p>
+                  </Link>
+                </div>
+              </div>
 
-        {/* Charts and detailed sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-3">
-            <ClientPerformanceChart />
-          </div>
+              <div className="flex justify-center mt-6">
+                <Link href="/clients">
+                  <Button variant="outline">
+                    View All Clients
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

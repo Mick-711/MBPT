@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft } from 'lucide-react';
+import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft, Heart } from 'lucide-react';
+import ClientHealthMetricsTab from '@/components/clients/client-health-metrics-tab';
 
 export default function ClientDetails() {
   const { id } = useParams();
@@ -136,10 +137,14 @@ export default function ClientDetails() {
 
         <div className="md:w-2/3">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid grid-cols-5 mb-8">
+            <TabsList className="grid grid-cols-6 mb-8">
               <TabsTrigger value="overview" className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="health" className="flex items-center">
+                <Heart className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Health</span>
               </TabsTrigger>
               <TabsTrigger value="workouts" className="flex items-center">
                 <Dumbbell className="mr-2 h-4 w-4" />
@@ -236,6 +241,10 @@ export default function ClientDetails() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="health" className="space-y-6">
+              <ClientHealthMetricsTab clientId={parseInt(id || '0')} />
             </TabsContent>
 
             <TabsContent value="workouts" className="space-y-6">
