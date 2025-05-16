@@ -104,17 +104,7 @@ export default function ClientStreakTracker({
   const openRewardDetails = (reward: any) => {
     setSelectedReward(reward);
     setShowRewardDialog(true);
-    
-    if (reward.unlocked) {
-      // Trigger confetti when viewing an unlocked reward
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }, 300);
-    }
+    // Removed confetti celebration - achievement celebrations should only be visible in client view
   };
   
   return (
