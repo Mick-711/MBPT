@@ -185,8 +185,12 @@ export default function MessagePreview() {
           ) : (
             <>
               {(conversations?.length > 0 ? conversations : defaultConversations).map((conversation) => (
-                <Link key={conversation.user.id} href={`/messages/${conversation.user.id}`}>
-                  <a><MessageItem conversation={conversation} /></a>
+                <Link 
+                  key={conversation.user.id} 
+                  href={`/messages/${conversation.user.id}`}
+                  className="block"
+                >
+                  <MessageItem conversation={conversation} />
                 </Link>
               ))}
             </>
