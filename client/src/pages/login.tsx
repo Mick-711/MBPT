@@ -44,16 +44,16 @@ export default function Login() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: userRole === "client" ? "client@example.com" : "trainer@example.com",
-      password: "password123",
+      email: userRole === "client" ? "mick.711@hotmail.com" : "michaelbach711@gmail.com",
+      password: "testing123",
     },
   });
 
   // Handle changing demo role
   const handleRoleChange = (role: "client" | "trainer") => {
     setUserRole(role);
-    form.setValue("email", role === "client" ? "client@example.com" : "trainer@example.com");
-    form.setValue("password", "password123");
+    form.setValue("email", role === "client" ? "mick.711@hotmail.com" : "michaelbach711@gmail.com");
+    form.setValue("password", "testing123");
   };
 
   // Handle form submission
