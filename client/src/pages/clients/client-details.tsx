@@ -15,7 +15,7 @@ import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dia
 import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
 import TrainerStreakView from '@/components/clients/trainer-streak-view';
 import AnimatedProgressChart from '@/components/clients/animated-progress-chart';
-import { ClientExerciseRecommendations } from '@/components/clients/client-exercise-recommendations';
+import ClientExerciseTab from '@/pages/clients/client-exercise-tab';
 
 // Global context to disable confetti/celebrations in trainer views
 window.IS_TRAINER_VIEW = true;
@@ -473,6 +473,10 @@ export default function ClientDetails() {
                   }
                 ]}
               />
+            </TabsContent>
+
+            <TabsContent value="exercises" className="space-y-6">
+              <ClientExerciseTab clientId={client.id} />
             </TabsContent>
 
             <TabsContent value="workouts" className="space-y-6">
