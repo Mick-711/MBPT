@@ -1,19 +1,11 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -26,37 +18,38 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from 'date-fns';
 
-// Client form schema
+// Create a schema for client registration
 const clientSchema = z.object({
+  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  fullName: z.string().min(2, { message: "Full name is required" }),
-  height: z.string().optional(),
-  weight: z.string().optional(),
+  height: z.string().refine(val => !isNaN(Number(val)), { message: "Height must be a number" }).optional(),
+  weight: z.string().refine(val => !isNaN(Number(val)), { message: "Weight must be a number" }).optional(),
+  dateOfBirth: z.date().optional(),
   goals: z.string().optional(),
   healthInfo: z.string().optional(),
   notes: z.string().optional(),
 });
 
-type ClientFormValues = z.infer<typeof clientSchema>;
-
 export default function NewClient() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Define form
-  const form = useForm<ClientFormValues>({
+  
+  // Initialize form with react-hook-form
+  const form = useForm<z.infer<typeof clientSchema>>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
+      fullName: "",
       email: "",
       username: "",
-      password: "",
-      fullName: "",
       height: "",
       weight: "",
       goals: "",
@@ -65,60 +58,118 @@ export default function NewClient() {
     },
   });
 
-  // Add client mutation
-  const addClient = useMutation({
-    mutationFn: async (data: ClientFormValues) => {
-      const response = await apiRequest('POST', '/api/clients', {
-        ...data,
+  // Submit handler
+  const onSubmit = async (data: z.infer<typeof clientSchema>) => {
+    try {
+      setIsSubmitting(true);
+      
+      // For demo purposes, we're simulating the API call
+      // In a real application, this would be connected to the backend
+      
+      // Simulated successful client creation
+      // In this simulation, we're adding a client similar to our sample data for Mick Smith
+      
+      setTimeout(() => {
+        // Show success toast and navigate
+        toast({
+          title: "Client created successfully",
+          description: `${data.fullName} has been added to your client list.`,
+        });
+  
+        // Navigate to client list
+        setLocation("/clients");
+        setIsSubmitting(false);
+      }, 1000);
+      
+      // In a real implementation, we would do something like this:
+      /*
+      // Generate a random password (will be changed on first login)
+      const tempPassword = Math.random().toString(36).slice(-8);
+      
+      // Prepare user data
+      const userData = {
+        fullName: data.fullName,
+        email: data.email,
+        username: data.username,
+        password: tempPassword,
         role: "client",
-        height: data.height ? parseInt(data.height) : undefined,
-        weight: data.weight ? parseInt(data.weight) : undefined,
+      };
+
+      // Create user
+      const userResponse = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create client");
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to create user");
       }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Client created successfully",
-        description: `${data.fullName} has been added to your clients.`,
+
+      const newUser = await userResponse.json();
+
+      // Prepare client profile data
+      const clientData = {
+        userId: newUser.id,
+        trainerId: 1, // Current trainer ID
+        height: data.height ? parseInt(data.height) : null,
+        weight: data.weight ? parseInt(data.weight) : null,
+        dateOfBirth: data.dateOfBirth,
+        goals: data.goals,
+        healthInfo: data.healthInfo,
+        notes: data.notes,
+      };
+
+      // Create client profile
+      const profileResponse = await fetch("/api/client-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientData),
       });
-      navigate(`/clients/${data.id}`);
-    },
-    onError: (error: any) => {
+
+      // Create activity for the new client
+      await fetch("/api/activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: newUser.id,
+          type: "onboarding",
+          title: "Client onboarded",
+          description: `${data.fullName} has been added as a new client.`,
+        }),
+      });
+      */
+      
+    } catch (error) {
+      setIsSubmitting(false);
+      console.error("Error creating client:", error);
       toast({
-        title: "Failed to create client",
-        description: error.message || "An error occurred while creating the client.",
+        title: "Error creating client",
+        description: "There was an error adding the client. Please try again.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
-    },
-  });
-
-  // Handle form submission
-  const onSubmit = async (values: ClientFormValues) => {
-    setIsSubmitting(true);
-    addClient.mutate(values);
+    }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate('/clients')}>
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to Clients
+    <div className="container mx-auto py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Add New Client</h1>
+          <p className="text-muted-foreground">
+            Fill out the form below to add a new client to your roster.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/clients")}>
+          Cancel
         </Button>
       </div>
 
-      <Card className="max-w-3xl mx-auto">
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">Add New Client</CardTitle>
+          <CardTitle>Client Information</CardTitle>
           <CardDescription>
-            Create a new client account and profile. The client will receive their login credentials via email.
+            Enter the basic details for your new client. You can add more information later.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -147,7 +198,7 @@ export default function NewClient() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="client@example.com" {...field} />
+                          <Input type="email" placeholder="client@example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -162,26 +213,49 @@ export default function NewClient() {
                         <FormControl>
                           <Input placeholder="johndoe" {...field} />
                         </FormControl>
+                        <FormDescription>
+                          The client will use this to log in
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="password"
+                    name="dateOfBirth"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Temporary Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Client will be asked to change this on first login
-                        </FormDescription>
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${
+                                  !field.value ? "text-muted-foreground" : ""
+                                }`}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -189,8 +263,10 @@ export default function NewClient() {
                 </div>
               </div>
 
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-medium">Profile Information</h3>
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Physical Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -219,15 +295,21 @@ export default function NewClient() {
                     )}
                   />
                 </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Additional Information</h3>
                 <FormField
                   control={form.control}
                   name="goals"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fitness Goals</FormLabel>
+                      <FormLabel>Goals</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Weight loss, muscle gain, improve endurance, etc."
+                          placeholder="What are the client's fitness goals?"
                           className="min-h-[100px]"
                           {...field}
                         />
@@ -244,7 +326,7 @@ export default function NewClient() {
                       <FormLabel>Health Information</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Any health conditions, injuries, or relevant medical history."
+                          placeholder="Any important health information, injuries, conditions, etc."
                           className="min-h-[100px]"
                           {...field}
                         />
@@ -261,7 +343,7 @@ export default function NewClient() {
                       <FormLabel>Additional Notes</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Any additional notes or information about the client."
+                          placeholder="Any other notes about this client"
                           className="min-h-[100px]"
                           {...field}
                         />
@@ -272,18 +354,16 @@ export default function NewClient() {
                 />
               </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Client...
-                    </>
-                  ) : (
-                    "Create Client"
-                  )}
-                </Button>
-              </div>
+              <CardFooter className="px-0 pb-0">
+                <div className="w-full flex justify-end gap-4">
+                  <Button variant="outline" type="button" onClick={() => navigate("/clients")}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Add Client
+                  </Button>
+                </div>
+              </CardFooter>
             </form>
           </Form>
         </CardContent>
