@@ -159,11 +159,12 @@ function Router() {
       
       {/* Trainer routes */}
       <Route path="/trainer/dashboard" component={Dashboard} />
+      <Route path="/trainer" component={Dashboard} />
       <Route path="/clients" component={ClientsList} />
-      <Route path="/clients/:id" component={ClientDetails} />
       <Route path="/clients/new" component={NewClient} />
-      <Route path="/trainer/workouts" component={WorkoutsList} />
-      <Route path="/trainer/workouts/create" component={CreateWorkout} />
+      <Route path="/clients/:id" component={ClientDetails} />
+      <Route path="/workouts" component={WorkoutsList} />
+      <Route path="/workouts/create" component={CreateWorkout} />
       
       <Route component={NotFound} />
     </Switch>
@@ -191,7 +192,9 @@ function App() {
   // Check if we're in the trainer dashboard
   const isTrainerDashboard = location.startsWith("/trainer") || 
                             location === "/clients" || 
-                            location.startsWith("/clients/");
+                            location.startsWith("/clients/") ||
+                            location === "/workouts" || 
+                            location.startsWith("/workouts/");
 
   if (isLoading) {
     return (
