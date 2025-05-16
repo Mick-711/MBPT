@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Dumbbell, UserCog } from "lucide-react";
 
 // Login form schema
 const loginSchema = z.object({
@@ -37,15 +38,23 @@ export default function Login() {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<"client" | "trainer">("client");
 
   // Define form
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: userRole === "client" ? "client@example.com" : "trainer@example.com",
+      password: "password123",
     },
   });
+
+  // Handle changing demo role
+  const handleRoleChange = (role: "client" | "trainer") => {
+    setUserRole(role);
+    form.setValue("email", role === "client" ? "client@example.com" : "trainer@example.com");
+    form.setValue("password", "password123");
+  };
 
   // Handle form submission
   const onSubmit = async (values: LoginFormValues) => {
@@ -81,7 +90,7 @@ export default function Login() {
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
               </svg>
             </div>
-            <span className="font-display font-bold text-2xl text-gray-900 dark:text-white">
+            <span className="font-bold text-2xl text-gray-900 dark:text-white">
               FitCoach<span className="text-primary">Pro</span>
             </span>
           </div>
@@ -95,6 +104,29 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-6">
+              <Tabs 
+                defaultValue="client" 
+                value={userRole} 
+                onValueChange={(value) => handleRoleChange(value as "client" | "trainer")}
+                className="w-full"
+              >
+                <TabsList className="grid grid-cols-2 w-full mb-2">
+                  <TabsTrigger value="client" className="flex items-center justify-center">
+                    <Dumbbell className="w-4 h-4 mr-2" />
+                    Client Demo
+                  </TabsTrigger>
+                  <TabsTrigger value="trainer" className="flex items-center justify-center">
+                    <UserCog className="w-4 h-4 mr-2" />
+                    Trainer Demo
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <p className="text-xs text-center text-muted-foreground mt-1">
+                Select a demo account to see different views
+              </p>
+            </div>
+
             {error && (
               <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md mb-4 text-sm">
                 {error}
@@ -139,7 +171,7 @@ export default function Login() {
                       Signing in...
                     </>
                   ) : (
-                    "Sign in"
+                    `Sign in as ${userRole === "client" ? "Client" : "Trainer"}`
                   )}
                 </Button>
               </form>
@@ -147,12 +179,19 @@ export default function Login() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 border-t pt-4">
             <div className="text-sm text-center text-gray-500 dark:text-gray-400">
-              Don't have an account?{" "}
-              <Link href="/register">
-                <a className="font-medium text-primary hover:underline">
-                  Sign up
-                </a>
-              </Link>
+              <div>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Demo accounts pre-filled with testing credentials
+                </p>
+              </div>
+              <div>
+                Don't have an account?{" "}
+                <Link href="/register">
+                  <a className="font-medium text-primary hover:underline">
+                    Sign up
+                  </a>
+                </Link>
+              </div>
             </div>
           </CardFooter>
         </Card>

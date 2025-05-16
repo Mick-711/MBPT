@@ -1,48 +1,79 @@
-import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { Home, Dumbbell, Pizza, BarChart3, MessageSquare, User } from 'lucide-react';
+import { Home, Dumbbell, Apple, ChartBar, MessageSquare, User } from 'lucide-react';
 
 export default function MobileClientNav() {
   const [location] = useLocation();
 
-  const isActive = (path: string) => {
-    if (path === '/' && location === '/') return true;
-    if (path !== '/' && location.startsWith(path)) return true;
-    return false;
-  };
-
+  // Navigation items for the bottom bar
   const navItems = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/workouts', label: 'Workouts', icon: Dumbbell },
-    { href: '/nutrition', label: 'Nutrition', icon: Pizza },
-    { href: '/progress', label: 'Progress', icon: BarChart3 },
-    { href: '/messages', label: 'Messages', icon: MessageSquare },
-    { href: '/profile', label: 'Profile', icon: User },
+    {
+      name: 'Dashboard',
+      href: '/mobile/client/dashboard',
+      icon: Home,
+      active: location === '/mobile/client/dashboard' || location === '/',
+    },
+    {
+      name: 'Workouts',
+      href: '/mobile/client/workouts',
+      icon: Dumbbell,
+      active: location.includes('/workouts'),
+    },
+    {
+      name: 'Nutrition',
+      href: '/mobile/client/nutrition',
+      icon: Apple,
+      active: location.includes('/nutrition'),
+    },
+    {
+      name: 'Progress',
+      href: '/mobile/client/progress',
+      icon: ChartBar,
+      active: location.includes('/progress'),
+    },
+    {
+      name: 'Messages',
+      href: '/mobile/client/messages',
+      icon: MessageSquare,
+      active: location.includes('/messages'),
+    },
+    {
+      name: 'Profile',
+      href: '/mobile/client/profile',
+      icon: User,
+      active: location.includes('/profile'),
+    },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t bg-background z-50">
-      <div className="flex justify-between px-2">
-        {navItems.map((item, index) => {
-          const active = isActive(item.href);
-          const Icon = item.icon;
-          
-          return (
-            <Link 
-              key={index} 
-              href={item.href}
-              className={`flex flex-col items-center justify-center py-2 px-4 text-xs ${
-                active 
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t py-2 px-1">
+      <div className="grid grid-cols-6 max-w-lg mx-auto">
+        {navItems.map((item) => (
+          <Link 
+            key={item.name} 
+            href={item.href}
+            className="flex flex-col items-center justify-center"
+          >
+            <div 
+              className={`p-1 rounded-full ${
+                item.active 
                   ? 'text-primary' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+            </div>
+            <span 
+              className={`text-[10px] mt-1 ${
+                item.active 
+                  ? 'font-medium text-primary' 
                   : 'text-muted-foreground'
               }`}
             >
-              <Icon className={`h-5 w-5 mb-1 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+              {item.name}
+            </span>
+          </Link>
+        ))}
       </div>
-    </div>
+    </nav>
   );
 }
