@@ -10,6 +10,9 @@ import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCo
 import ClientHealthMetricsTab from '@/components/clients/client-health-metrics-tab';
 import { EditProfileDialog } from '@/components/clients/edit-profile-dialog';
 import { EditNotesDialog } from '@/components/clients/edit-notes-dialog';
+import { ClientMessageDialog } from '@/components/clients/client-message-dialog';
+import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dialog';
+import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
 
 export default function ClientDetails() {
   const { id } = useParams();
@@ -224,10 +227,9 @@ export default function ClientDetails() {
                 <EditProfileDialog client={client} onSuccess={() => {
                   // Refresh client data after edit (handled by the component itself)
                 }} />
-                <Button variant="outline" size="sm">
-                  <Mail className="mr-2 h-4 w-4" />
-                  Message
-                </Button>
+                <ClientMessageDialog client={client} onSuccess={() => {
+                  // Refresh client data after sending message
+                }} />
               </div>
             </CardContent>
           </Card>
@@ -264,8 +266,11 @@ export default function ClientDetails() {
 
             <TabsContent value="overview" className="space-y-6">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle>Recent Activity</CardTitle>
+                  <AddActivityDialog client={client} onSuccess={() => {
+                    // Refresh client data after adding activity
+                  }} />
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-8">
@@ -273,13 +278,20 @@ export default function ClientDetails() {
                       client.activities.map((activity: any, index: number) => (
                         <div key={index} className="flex">
                           <div className="mr-4 flex flex-col items-center">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                              activity.type === 'workout' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
+                              activity.type === 'nutrition' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
+                              activity.type === 'progress' ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' :
+                              activity.type === 'assessment' ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' :
+                              'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                            }`}>
                               {activity.type === 'workout' && <Dumbbell className="h-5 w-5" />}
                               {activity.type === 'nutrition' && <Pizza className="h-5 w-5" />}
                               {activity.type === 'progress' && <BarChart3 className="h-5 w-5" />}
                               {activity.type === 'message' && <MessageSquare className="h-5 w-5" />}
+                              {activity.type === 'assessment' && <Calendar className="h-5 w-5" />}
                             </div>
-                            <div className="h-full w-px bg-muted" />
+                            {index < client.activities.length - 1 && <div className="h-full w-px bg-muted" />}
                           </div>
                           <div>
                             <div className="font-medium">{activity.title}</div>
@@ -290,7 +302,15 @@ export default function ClientDetails() {
                       ))
                     ) : (
                       <div className="text-center py-6 text-muted-foreground">
-                        No recent activity to display.
+                        <p className="mb-4">No recent activity to display.</p>
+                        <AddActivityDialog 
+                          client={client} 
+                          variant="default"
+                          size="default"
+                          onSuccess={() => {
+                            // Refresh client data after adding activity
+                          }} 
+                        />
                       </div>
                     )}
                   </div>
@@ -299,27 +319,44 @@ export default function ClientDetails() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle>Upcoming Sessions</CardTitle>
+                    <ScheduleSessionDialog client={client} onSuccess={() => {
+                      // Refresh client data after scheduling session
+                    }} />
                   </CardHeader>
                   <CardContent>
                     {client.upcomingSessions && client.upcomingSessions.length > 0 ? (
                       <div className="space-y-4">
                         {client.upcomingSessions.map((session: any, index: number) => (
-                          <div key={index} className="flex items-start space-x-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                          <div key={index} className="flex items-start space-x-4 p-3 rounded-md border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
                               <Calendar className="h-5 w-5" />
                             </div>
-                            <div>
+                            <div className="flex-grow">
                               <div className="font-medium">{session.title}</div>
                               <div className="text-sm text-muted-foreground">{session.date} • {session.time}</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                <Calendar className="h-4 w-4" />
+                                <span className="sr-only">Add to Calendar</span>
+                              </Button>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div className="text-center py-6 text-muted-foreground">
-                        No upcoming sessions scheduled.
+                        <p className="mb-4">No upcoming sessions scheduled.</p>
+                        <ScheduleSessionDialog 
+                          client={client} 
+                          variant="default"
+                          size="default"
+                          onSuccess={() => {
+                            // Refresh client data after scheduling session
+                          }} 
+                        />
                       </div>
                     )}
                   </CardContent>
