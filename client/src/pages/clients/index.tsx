@@ -246,13 +246,20 @@ const ClientsListPage = () => {
   const [sortField, setSortField] = useState("fullName");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Simulate API call with React Query
+  // Get clients from local storage
   const { data: clients, isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return SAMPLE_CLIENTS;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      // Get clients from local storage, initialize with sample data if empty
+      const storedClients = localStorage.getItem("fitTrainPro_clients");
+      if (!storedClients) {
+        localStorage.setItem("fitTrainPro_clients", JSON.stringify(SAMPLE_CLIENTS));
+        return SAMPLE_CLIENTS;
+      }
+      return JSON.parse(storedClients);
     },
   });
 

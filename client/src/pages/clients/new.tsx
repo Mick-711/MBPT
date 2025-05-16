@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { addClientToStorage } from "@/lib/localStorageHelpers";
 
 import {
   Form,
@@ -63,82 +64,37 @@ export default function NewClient() {
     try {
       setIsSubmitting(true);
       
-      // For demo purposes, we're simulating the API call
-      // In a real application, this would be connected to the backend
+      // Create a new client with the form data
+      const newClient = {
+        fullName: data.fullName,
+        email: data.email,
+        profileImage: null,
+        joinedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+        subscription: "Standard", // Default subscription
+        status: "active",
+        progress: 0, // New client starts at 0%
+        trainer: "John Trainer", // Current trainer
+        tags: data.goals ? [data.goals.split(',')[0].trim()] : ["general fitness"], // Use first goal as a tag
+        nextSession: null // No session scheduled yet
+      };
       
-      // Simulated successful client creation
-      // In this simulation, we're adding a client similar to our sample data for Mick Smith
+      // Save to local storage
+      addClientToStorage(newClient);
       
+      // Invalidate the clients query cache
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      
+      // Show success toast
+      toast({
+        title: "Client created successfully",
+        description: `${data.fullName} has been added to your client list.`,
+      });
+
+      // Navigate to client list after a short delay
       setTimeout(() => {
-        // Show success toast and navigate
-        toast({
-          title: "Client created successfully",
-          description: `${data.fullName} has been added to your client list.`,
-        });
-  
-        // Navigate to client list
         setLocation("/clients");
         setIsSubmitting(false);
       }, 1000);
-      
-      // In a real implementation, we would do something like this:
-      /*
-      // Generate a random password (will be changed on first login)
-      const tempPassword = Math.random().toString(36).slice(-8);
-      
-      // Prepare user data
-      const userData = {
-        fullName: data.fullName,
-        email: data.email,
-        username: data.username,
-        password: tempPassword,
-        role: "client",
-      };
-
-      // Create user
-      const userResponse = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-
-      if (!userResponse.ok) {
-        throw new Error("Failed to create user");
-      }
-
-      const newUser = await userResponse.json();
-
-      // Prepare client profile data
-      const clientData = {
-        userId: newUser.id,
-        trainerId: 1, // Current trainer ID
-        height: data.height ? parseInt(data.height) : null,
-        weight: data.weight ? parseInt(data.weight) : null,
-        dateOfBirth: data.dateOfBirth,
-        goals: data.goals,
-        healthInfo: data.healthInfo,
-        notes: data.notes,
-      };
-
-      // Create client profile
-      const profileResponse = await fetch("/api/client-profiles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(clientData),
-      });
-
-      // Create activity for the new client
-      await fetch("/api/activities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: newUser.id,
-          type: "onboarding",
-          title: "Client onboarded",
-          description: `${data.fullName} has been added as a new client.`,
-        }),
-      });
-      */
       
     } catch (error) {
       setIsSubmitting(false);
@@ -160,7 +116,7 @@ export default function NewClient() {
             Fill out the form below to add a new client to your roster.
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate("/clients")}>
+        <Button variant="outline" onClick={() => setLocation("/clients")}>
           Cancel
         </Button>
       </div>
@@ -356,7 +312,7 @@ export default function NewClient() {
 
               <CardFooter className="px-0 pb-0">
                 <div className="w-full flex justify-end gap-4">
-                  <Button variant="outline" type="button" onClick={() => navigate("/clients")}>
+                  <Button variant="outline" type="button" onClick={() => setLocation("/clients")}>
                     Cancel
                   </Button>
                   <Button type="submit">
