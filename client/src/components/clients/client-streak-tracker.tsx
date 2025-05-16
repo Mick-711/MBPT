@@ -1,221 +1,233 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Calendar, Flame, Medal, Star, Trophy, Award, Gift } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-interface StreakDay {
-  date: string;
-  completed: boolean;
-  activities: string[];
-}
-
-interface Reward {
-  id: number;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  unlocked: boolean;
-  unlocksAt: number; // streak count to unlock
-}
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Award, Trophy, Medal, Flame, Gift, Star, Crown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import confetti from 'canvas-confetti';
 
 interface ClientStreakTrackerProps {
-  clientId: number;
   streakCount: number;
-  streakDays: StreakDay[];
   longestStreak: number;
   totalCompletedDays: number;
-  rewards: Reward[];
+  streakDays: Array<{
+    date: string;
+    completed: boolean;
+    activities: string[];
+  }>;
+  rewards: Array<{
+    id: number;
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+    unlocked: boolean;
+    unlocksAt: number;
+  }>;
 }
 
+const defaultRewards = [
+  {
+    id: 1,
+    name: "Dedication Badge",
+    description: "Completed 3 days in a row",
+    icon: <Medal className="h-8 w-8 text-blue-400" />,
+    unlocked: false,
+    unlocksAt: 3
+  },
+  {
+    id: 2,
+    name: "Consistency Award",
+    description: "Completed 7 days in a row",
+    icon: <Award className="h-8 w-8 text-green-400" />,
+    unlocked: false,
+    unlocksAt: 7
+  },
+  {
+    id: 3,
+    name: "Fitness Enthusiast",
+    description: "Completed 14 days in a row",
+    icon: <Flame className="h-8 w-8 text-orange-400" />,
+    unlocked: false,
+    unlocksAt: 14
+  },
+  {
+    id: 4,
+    name: "Health Champion",
+    description: "Completed 30 days in a row",
+    icon: <Trophy className="h-8 w-8 text-yellow-500" />,
+    unlocked: false,
+    unlocksAt: 30
+  },
+  {
+    id: 5,
+    name: "Fitness Legend",
+    description: "Completed 90 days in a row",
+    icon: <Crown className="h-8 w-8 text-purple-500" />,
+    unlocked: false,
+    unlocksAt: 90
+  }
+];
+
 export default function ClientStreakTracker({ 
-  clientId, 
-  streakCount, 
-  streakDays,
-  longestStreak,
-  totalCompletedDays,
-  rewards 
+  streakCount = 5, 
+  longestStreak = 12, 
+  totalCompletedDays = 23,
+  streakDays = [],
+  rewards = defaultRewards
 }: ClientStreakTrackerProps) {
-  // Calculate the next milestone
-  const nextMilestone = React.useMemo(() => {
-    const milestones = [7, 14, 30, 60, 90, 180, 365];
-    return milestones.find(milestone => milestone > streakCount) || milestones[milestones.length - 1];
-  }, [streakCount]);
-
-  // Calculate progress percentage to next milestone
-  const progressToNextMilestone = React.useMemo(() => {
-    const prevMilestone = streakCount === 0 ? 0 : 
-      [0, 7, 14, 30, 60, 90, 180].filter(m => m < streakCount).pop() || 0;
-    return Math.round(((streakCount - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
-  }, [streakCount, nextMilestone]);
-
+  
+  const [selectedReward, setSelectedReward] = useState<any>(null);
+  const [showRewardDialog, setShowRewardDialog] = useState(false);
+  
+  // Process rewards to update unlocked status based on streak count
+  const processedRewards = rewards.map(reward => ({
+    ...reward,
+    unlocked: streakCount >= reward.unlocksAt
+  }));
+  
+  // Fill streakDays with default values if not provided
+  const defaultStreakDays = [];
+  if (streakDays.length === 0) {
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      defaultStreakDays.push({
+        date: date.toISOString().split('T')[0],
+        completed: Math.random() > 0.3, // Randomly mark as completed
+        activities: ["Cardio", "Nutrition plan"]
+      });
+    }
+  }
+  
+  const displayStreakDays = streakDays.length > 0 ? streakDays : defaultStreakDays;
+  
+  const openRewardDetails = (reward: any) => {
+    setSelectedReward(reward);
+    setShowRewardDialog(true);
+    
+    if (reward.unlocked) {
+      // Trigger confetti when viewing an unlocked reward
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 300);
+    }
+  };
+  
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle>Habit Streaks</CardTitle>
-          <div className="flex items-center gap-1 text-amber-500 font-semibold">
-            <Flame className="h-5 w-5" />
-            <span className="text-xl">{streakCount}</span>
-            <span className="text-sm text-muted-foreground">days</span>
-          </div>
-        </div>
-        <CardDescription>
-          Track consistency across workouts and nutrition
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Current streak visualization */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm font-medium">
-            <span>Current Streak</span>
-            <span>{streakCount} days</span>
-          </div>
-          <div className="space-y-1">
-            <Progress value={progressToNextMilestone} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Next milestone: {nextMilestone} days</span>
-              <span>{progressToNextMilestone}%</span>
+    <div>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center">
+            <Flame className="h-5 w-5 mr-2 text-orange-500" />
+            Streak Tracker
+          </CardTitle>
+          <CardDescription>Track daily habits and earn rewards</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-6">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Current Streak</p>
+              <p className="text-2xl font-bold">{streakCount} days</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Longest Streak</p>
+              <p className="text-2xl font-bold">{longestStreak} days</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Total Days</p>
+              <p className="text-2xl font-bold">{totalCompletedDays}</p>
             </div>
           </div>
-        </div>
-
-        {/* Recent activity calendar */}
-        <div className="pt-2">
-          <div className="text-sm font-medium mb-2">Recent Activity</div>
-          <div className="flex gap-1 justify-between">
-            {streakDays.slice(-7).map((day, i) => (
-              <TooltipProvider key={i}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div 
-                      className={cn(
-                        "flex flex-col items-center",
-                        day.completed ? "text-green-500" : "text-muted-foreground"
-                      )}
-                    >
-                      <div 
-                        className={cn(
-                          "w-8 h-8 flex items-center justify-center rounded-full", 
-                          day.completed ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"
-                        )}
-                      >
-                        {day.completed ? (
-                          <Flame className="h-4 w-4" />
-                        ) : (
-                          <Calendar className="h-4 w-4 opacity-40" />
-                        )}
-                      </div>
-                      <div className="text-xs mt-1">{day.date.split(' ')[0]}</div>
+          
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-2">Last 7 Days</h4>
+            <div className="flex justify-between">
+              {displayStreakDays.slice(-7).map((day, index) => {
+                const date = new Date(day.date);
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-xs text-muted-foreground">
+                      {date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[200px]">
-                    <p className="font-semibold">{day.date}</p>
-                    {day.completed ? (
-                      <>
-                        <p className="text-xs text-green-500 font-medium">Activities completed:</p>
-                        <ul className="text-xs mt-1 space-y-1">
-                          {day.activities.map((activity, j) => (
-                            <li key={j} className="flex items-center gap-1">
-                              <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                              <span>{activity}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    ) : (
-                      <p className="text-xs">No activities recorded</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats overview */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium">Longest Streak</span>
-            </div>
-            <div className="mt-1 text-2xl font-semibold">{longestStreak} days</div>
-          </div>
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Total Days</span>
-            </div>
-            <div className="mt-1 text-2xl font-semibold">{totalCompletedDays}</div>
-          </div>
-        </div>
-
-        {/* Rewards section */}
-        <div className="pt-2">
-          <div className="text-sm font-medium mb-3">Achievements & Rewards</div>
-          <div className="grid grid-cols-4 gap-3">
-            {rewards.map((reward) => (
-              <TooltipProvider key={reward.id}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div 
-                      className={cn(
-                        "aspect-square rounded-lg flex flex-col items-center justify-center",
-                        reward.unlocked 
-                          ? "bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800" 
-                          : "bg-muted text-muted-foreground"
+                    <div className={`
+                      w-8 h-8 rounded-full flex items-center justify-center mt-1
+                      ${day.completed 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                      }
+                    `}>
+                      {day.completed ? (
+                        <Star className="h-4 w-4" />
+                      ) : (
+                        <span className="text-xs">{date.getDate()}</span>
                       )}
-                    >
-                      <div className={cn(
-                        "h-8 w-8 flex items-center justify-center",
-                        !reward.unlocked && "opacity-30"
-                      )}>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium mb-2">Rewards</h4>
+            <div className="grid grid-cols-5 gap-2">
+              {processedRewards.map((reward) => (
+                <Button
+                  key={reward.id}
+                  variant="outline"
+                  className={`h-auto p-2 flex flex-col items-center ${
+                    reward.unlocked ? 'border-primary' : 'opacity-70'
+                  }`}
+                  onClick={() => openRewardDetails(reward)}
+                >
+                  <div className="mb-1">
+                    {reward.unlocked ? reward.icon : (
+                      <div className="relative">
                         {reward.icon}
-                      </div>
-                      {!reward.unlocked && (
-                        <div className="text-[10px] mt-1 text-center">
-                          {reward.unlocksAt} days
+                        <div className="absolute inset-0 bg-background opacity-80 flex items-center justify-center rounded-full">
+                          <Gift className="h-4 w-4 text-muted-foreground" />
                         </div>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <div className="space-y-1">
-                      <p className="font-semibold">{reward.name}</p>
-                      <p className="text-xs">{reward.description}</p>
-                      {!reward.unlocked && (
-                        <p className="text-xs text-muted-foreground">
-                          Unlocks at {reward.unlocksAt} day streak
-                        </p>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs truncate w-full text-center">
+                    {reward.unlocked ? reward.name : `${reward.unlocksAt} days`}
+                  </span>
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          disabled={rewards.every(r => r.unlocked)}
-        >
-          <Gift className="mr-2 h-4 w-4" />
-          {rewards.every(r => r.unlocked) 
-            ? "All rewards unlocked!" 
-            : "Keep going for more rewards"}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Reward Details Dialog */}
+      {selectedReward && (
+        <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center flex flex-col items-center">
+                <div className="mb-4 mt-2">
+                  {selectedReward.icon}
+                </div>
+                <span>{selectedReward.name}</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center py-4">
+              <p className="mb-4">{selectedReward.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedReward.unlocked 
+                  ? "You've earned this reward! Keep up the great work." 
+                  : `Continue your streak for ${selectedReward.unlocksAt - streakCount} more days to unlock this reward.`
+                }
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 }

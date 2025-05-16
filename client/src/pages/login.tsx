@@ -2,7 +2,7 @@ import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 
 import {
   Card,
@@ -124,6 +124,9 @@ export default function Login() {
           <div className="text-sm text-muted-foreground text-center">
             <p>Demo credentials can be anything</p>
             <p className="mt-1 text-xs">This is a demo to show the client profile features</p>
+            <Link href="/demo" className="text-primary mt-4 block">
+              Or view the health metrics demo directly →
+            </Link>
           </div>
         </CardFooter>
       </Card>

@@ -156,6 +156,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/demo" component={React.lazy(() => import('./pages/demo'))} />
       <Route path="/" component={(props) => <TrainerRoute component={Dashboard} {...props} />} />
       <Route path="/clients" component={(props) => <TrainerRoute component={ClientsList} {...props} />} />
       <Route path="/clients/:id" component={(props) => <TrainerRoute component={ClientDetails} {...props} />} />
