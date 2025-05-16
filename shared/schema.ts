@@ -261,6 +261,8 @@ export const progressRecords = pgTable("progress_records", {
   weight: integer("weight"), // in kg
   bodyFat: integer("body_fat"), // percentage
   muscleMass: integer("muscle_mass"), // percentage
+  steps: integer("steps"), // daily step count
+  waterIntake: integer("water_intake"), // in ml
   notes: text("notes"),
   measurements: jsonb("measurements"), // JSON object with various body measurements
 });
@@ -282,10 +284,114 @@ export const progressPhotos = pgTable("progress_photos", {
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
+// Daily Habits
+export const habitTypes = pgTable("habit_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon"),
+  defaultTarget: integer("default_target"), // Default target value
+  unit: text("unit"), // Unit of measurement (steps, glasses, etc.)
+  category: text("category"), // Exercise, Nutrition, Wellness, etc.
+});
+
+export const clientHabits = pgTable("client_habits", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clientProfiles.id, { onDelete: 'cascade' }),
+  habitTypeId: integer("habit_type_id").notNull().references(() => habitTypes.id),
+  target: integer("target").notNull(), // Target value
+  active: boolean("active").default(true),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"),
+});
+
+export const habitLogs = pgTable("habit_logs", {
+  id: serial("id").primaryKey(),
+  clientHabitId: integer("client_habit_id").notNull().references(() => clientHabits.id, { onDelete: 'cascade' }),
+  date: timestamp("date").defaultNow().notNull(),
+  value: integer("value").notNull(), // Actual value achieved
+  completed: boolean("completed").default(false),
+  notes: text("notes"),
+});
+
+// Exercise Performance Tracking
+export const exercisePerformance = pgTable("exercise_performance", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clientProfiles.id, { onDelete: 'cascade' }),
+  exerciseId: integer("exercise_id").notNull().references(() => exercises.id),
+  workoutId: integer("workout_id").references(() => workouts.id),
+  date: timestamp("date").defaultNow().notNull(),
+  weight: integer("weight"), // in kg
+  reps: integer("reps"),
+  sets: integer("sets"),
+  rpe: integer("rpe"), // Rate of Perceived Exertion (1-10)
+  notes: text("notes"),
+});
+
+// One Rep Max (and other rep maxes)
+export const repMaxes = pgTable("rep_maxes", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clientProfiles.id, { onDelete: 'cascade' }),
+  exerciseId: integer("exercise_id").notNull().references(() => exercises.id),
+  date: timestamp("date").defaultNow().notNull(),
+  reps: integer("reps").notNull(), // 1 for 1RM, 5 for 5RM, etc.
+  weight: integer("weight").notNull(), // in kg
+  estimated: boolean("estimated").default(false), // Whether this is an actual lift or calculated estimate
+});
+
 export const progressPhotosRelations = relations(progressPhotos, ({ one }) => ({
   progressRecord: one(progressRecords, {
     fields: [progressPhotos.progressId],
     references: [progressRecords.id]
+  })
+}));
+
+export const habitTypesRelations = relations(habitTypes, ({ many }) => ({
+  clientHabits: many(clientHabits)
+}));
+
+export const clientHabitsRelations = relations(clientHabits, ({ one, many }) => ({
+  client: one(clientProfiles, {
+    fields: [clientHabits.clientId],
+    references: [clientProfiles.id]
+  }),
+  habitType: one(habitTypes, {
+    fields: [clientHabits.habitTypeId],
+    references: [habitTypes.id]
+  }),
+  logs: many(habitLogs)
+}));
+
+export const habitLogsRelations = relations(habitLogs, ({ one }) => ({
+  clientHabit: one(clientHabits, {
+    fields: [habitLogs.clientHabitId],
+    references: [clientHabits.id]
+  })
+}));
+
+export const exercisePerformanceRelations = relations(exercisePerformance, ({ one }) => ({
+  client: one(clientProfiles, {
+    fields: [exercisePerformance.clientId],
+    references: [clientProfiles.id]
+  }),
+  exercise: one(exercises, {
+    fields: [exercisePerformance.exerciseId],
+    references: [exercises.id]
+  }),
+  workout: one(workouts, {
+    fields: [exercisePerformance.workoutId],
+    references: [workouts.id]
+  })
+}));
+
+export const repMaxesRelations = relations(repMaxes, ({ one }) => ({
+  client: one(clientProfiles, {
+    fields: [repMaxes.clientId],
+    references: [clientProfiles.id]
+  }),
+  exercise: one(exercises, {
+    fields: [repMaxes.exerciseId],
+    references: [exercises.id]
   })
 }));
 
@@ -373,6 +479,11 @@ export const insertProgressPhotoSchema = createInsertSchema(progressPhotos).omit
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, sentAt: true, status: true, readAt: true });
 export const insertClientActivitySchema = createInsertSchema(clientActivities).omit({ id: true, activityDate: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, completed: true, completedAt: true });
+export const insertHabitTypeSchema = createInsertSchema(habitTypes).omit({ id: true });
+export const insertClientHabitSchema = createInsertSchema(clientHabits).omit({ id: true, startDate: true });
+export const insertHabitLogSchema = createInsertSchema(habitLogs).omit({ id: true, date: true });
+export const insertExercisePerformanceSchema = createInsertSchema(exercisePerformance).omit({ id: true, date: true });
+export const insertRepMaxSchema = createInsertSchema(repMaxes).omit({ id: true, date: true });
 
 // Define types
 export type User = typeof users.$inferSelect;
@@ -419,3 +530,19 @@ export type InsertClientActivity = z.infer<typeof insertClientActivitySchema>;
 
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
+
+// New types for progress tracking
+export type HabitType = typeof habitTypes.$inferSelect;
+export type InsertHabitType = z.infer<typeof insertHabitTypeSchema>;
+
+export type ClientHabit = typeof clientHabits.$inferSelect;
+export type InsertClientHabit = z.infer<typeof insertClientHabitSchema>;
+
+export type HabitLog = typeof habitLogs.$inferSelect;
+export type InsertHabitLog = z.infer<typeof insertHabitLogSchema>;
+
+export type ExercisePerformance = typeof exercisePerformance.$inferSelect;
+export type InsertExercisePerformance = z.infer<typeof insertExercisePerformanceSchema>;
+
+export type RepMax = typeof repMaxes.$inferSelect;
+export type InsertRepMax = z.infer<typeof insertRepMaxSchema>;
