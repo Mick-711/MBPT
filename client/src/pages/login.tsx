@@ -45,7 +45,7 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: userRole === "client" ? "mick.711@hotmail.com" : "michaelbach711@gmail.com",
-      password: "testing123",
+      password: "Flash19050295!",
     },
   });
 
@@ -53,7 +53,7 @@ export default function Login() {
   const handleRoleChange = (role: "client" | "trainer") => {
     setUserRole(role);
     form.setValue("email", role === "client" ? "mick.711@hotmail.com" : "michaelbach711@gmail.com");
-    form.setValue("password", "testing123");
+    form.setValue("password", "Flash19050295!");
   };
 
   // Handle form submission
@@ -64,12 +64,15 @@ export default function Login() {
     try {
       await login(values.email, values.password);
       
-      // Force redirection after successful login
-      if (userRole === "client") {
-        window.location.href = "/mobile/client/dashboard";
-      } else {
-        window.location.href = "/";
-      }
+      // Wait briefly for the auth state to update
+      setTimeout(() => {
+        // Force redirection after successful login
+        if (userRole === "client") {
+          window.location.href = "/mobile/client/dashboard";
+        } else {
+          window.location.href = "/";
+        }
+      }, 500);
     } catch (err: any) {
       setError(err.message || "Failed to login. Please check your credentials.");
       setIsLoading(false);
