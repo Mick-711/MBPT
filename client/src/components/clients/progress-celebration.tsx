@@ -12,7 +12,8 @@ export function ProgressCelebration({ message }: ProgressCelebrationProps) {
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    if (open) {
+    // Skip celebration effects if we're in the trainer view
+    if (open && !window.IS_TRAINER_VIEW) {
       // Trigger confetti when celebration modal is shown
       const duration = 3 * 1000;
       const animationEnd = Date.now() + duration;

@@ -105,8 +105,9 @@ export default function ClientStreakTracker({
     setSelectedReward(reward);
     setShowRewardDialog(true);
     
-    if (reward.unlocked) {
+    if (reward.unlocked && !window.IS_TRAINER_VIEW) {
       // Trigger confetti when viewing an unlocked reward
+      // Only in client view, never in trainer view
       setTimeout(() => {
         confetti({
           particleCount: 100,

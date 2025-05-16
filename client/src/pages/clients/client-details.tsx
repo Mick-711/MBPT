@@ -13,9 +13,11 @@ import { EditNotesDialog } from '@/components/clients/edit-notes-dialog';
 import { ClientMessageDialog } from '@/components/clients/client-message-dialog';
 import { ScheduleSessionDialog } from '@/components/clients/schedule-session-dialog';
 import { AddActivityDialog } from '@/components/clients/add-activity-dialog';
-import ClientStreakTracker from '@/components/clients/client-streak-tracker';
 import TrainerStreakView from '@/components/clients/trainer-streak-view';
 import AnimatedProgressChart from '@/components/clients/animated-progress-chart';
+
+// Global context to disable confetti/celebrations in trainer views
+window.IS_TRAINER_VIEW = true;
 
 export default function ClientDetails() {
   const { id } = useParams();
