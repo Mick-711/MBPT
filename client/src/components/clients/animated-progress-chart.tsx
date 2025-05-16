@@ -172,9 +172,10 @@ export default function AnimatedProgressChart({
             <div className="mb-3">
               <div className="flex justify-between text-xs mb-1">
                 <span>Progress to goal</span>
-                <div className="flex items-center">
-                  <Target className="w-3 h-3 mr-1 text-primary" />
+                <div className="flex items-center gap-1">
+                  <Target className="w-3 h-3 text-primary" />
                   <span>{goal.toFixed(1)} kg</span>
+                  <span className="text-xs text-muted-foreground">({Math.round(percentToGoal)}%)</span>
                 </div>
               </div>
               <Progress value={percentToGoal} className={`h-2 ${showAnimation ? 'animate-pulse' : ''}`} />
@@ -222,33 +223,36 @@ export default function AnimatedProgressChart({
             <div className="mb-3">
               <div className="flex justify-between text-xs mb-1">
                 <span>Progress to goal</span>
-                <div className="flex items-center">
-                  <Target className="w-3 h-3 mr-1 text-primary" />
+                <div className="flex items-center gap-1">
+                  <Target className="w-3 h-3 text-primary" />
                   <span>{goal.toFixed(1)}</span>
+                  <span className="text-xs text-muted-foreground">({Math.round(percentToGoal)}%)</span>
                 </div>
               </div>
               <Progress value={percentToGoal} className={`h-2 ${showAnimation ? 'animate-pulse' : ''}`} />
             </div>
           )}
           
-          <div className="flex mt-4 space-x-1">
-            {data.slice(-7).map((item, index) => {
-              const max = Math.max(...data.slice(-7).map(d => d.value));
-              const min = Math.min(...data.slice(-7).map(d => d.value));
-              const range = max - min;
-              const height = range > 0 ? ((item.value - min) / range) * 60 + 10 : 35;
+          <div className="mt-4">
+            <div className="flex justify-between mb-2 text-xs font-medium">
+              <div>Day</div>
+              <div>Calories</div>
+              <div>Protein</div>
+              <div>Carbs</div>
+              <div>Fats</div>
+            </div>
+            
+            {data.slice(-7).map((item: any, index) => {
+              const dayName = new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' });
+              const isToday = index === data.slice(-7).length - 1;
               
               return (
-                <div key={index} className="flex flex-col items-center flex-1">
-                  <div className="w-full flex justify-center">
-                    <div 
-                      className={`w-full max-w-[20px] rounded-t-sm ${index === data.slice(-7).length - 1 ? 'bg-primary' : 'bg-muted'}`}
-                      style={{ height: `${height}px` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1 truncate w-full text-center">
-                    {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </div>
+                <div key={index} className={`flex justify-between py-1.5 text-xs border-t ${isToday ? 'bg-muted/30' : ''}`}>
+                  <div className="font-medium">{dayName}</div>
+                  <div>{item.calories || '-'}</div>
+                  <div>{item.protein || '-'}g</div>
+                  <div>{item.carbs || '-'}g</div>
+                  <div>{item.fats || '-'}g</div>
                 </div>
               );
             })}

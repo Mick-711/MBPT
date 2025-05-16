@@ -41,14 +41,20 @@ const healthMetrics = {
     { date: '2025-05-05', value: 4 },
     { date: '2025-05-06', value: 4 }
   ],
+  nutritionPlan: {
+    calories: 2400,
+    protein: 180,
+    carbs: 220,
+    fats: 80
+  },
   nutritionAdherence: [
-    { date: '2025-04-30', value: 60 },
-    { date: '2025-05-01', value: 80 },
-    { date: '2025-05-02', value: 75 },
-    { date: '2025-05-03', value: 70 },
-    { date: '2025-05-04', value: 90 },
-    { date: '2025-05-05', value: 85 },
-    { date: '2025-05-06', value: 80 }
+    { date: '2025-04-30', value: 60, calories: 1850, protein: 120, carbs: 190, fats: 60 },
+    { date: '2025-05-01', value: 80, calories: 2150, protein: 156, carbs: 201, fats: 72 },
+    { date: '2025-05-02', value: 75, calories: 2080, protein: 145, carbs: 192, fats: 68 },
+    { date: '2025-05-03', value: 70, calories: 1950, protein: 130, carbs: 170, fats: 65 },
+    { date: '2025-05-04', value: 90, calories: 2320, protein: 170, carbs: 215, fats: 76 },
+    { date: '2025-05-05', value: 85, calories: 2250, protein: 165, carbs: 210, fats: 74 },
+    { date: '2025-05-06', value: 80, calories: 2100, protein: 160, carbs: 195, fats: 70 }
   ],
   streakDays: [
     { date: '2025-05-01', completed: true, activities: ['Workout', 'Nutrition'] },
@@ -140,6 +146,29 @@ export default function ClientHealthMetricsTab({ client }) {
               <Award className="text-emerald-500 mr-2 h-5 w-5" />
               Nutrition Adherence
             </h3>
+            
+            <div className="bg-muted/30 p-3 rounded-md mb-4">
+              <h4 className="text-sm font-medium mb-2">Daily Nutrition Plan</h4>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="bg-background rounded-md p-2">
+                  <div className="text-xs text-muted-foreground">Calories</div>
+                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.calories}</div>
+                </div>
+                <div className="bg-background rounded-md p-2">
+                  <div className="text-xs text-muted-foreground">Protein</div>
+                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.protein}g</div>
+                </div>
+                <div className="bg-background rounded-md p-2">
+                  <div className="text-xs text-muted-foreground">Carbs</div>
+                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.carbs}g</div>
+                </div>
+                <div className="bg-background rounded-md p-2">
+                  <div className="text-xs text-muted-foreground">Fats</div>
+                  <div className="text-lg font-medium">{healthMetrics.nutritionPlan.fats}g</div>
+                </div>
+              </div>
+            </div>
+            
             <AnimatedProgressChart 
               data={healthMetrics.nutritionAdherence}
               animate={animate}
