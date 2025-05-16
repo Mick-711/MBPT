@@ -182,7 +182,7 @@ export default function ClientDetails() {
               <div className="flex justify-between items-start">
                 <div className="flex flex-col items-center">
                   <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage src={client.profileImage} />
+                    <AvatarImage src={client.profileImage || undefined} />
                     <AvatarFallback className="text-2xl">{client.fullName.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <CardTitle className="text-2xl text-center">{client.fullName}</CardTitle>
@@ -371,18 +371,30 @@ export default function ClientDetails() {
                     )}
                   </CardContent>
                 </Card>
-                
+
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle>Notes</CardTitle>
+                    <EditNotesDialog client={client} onSuccess={() => {
+                      // Refresh client data after editing notes
+                    }} />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      {client.notes || 'No notes available for this client.'}
-                    </p>
-                    <EditNotesDialog client={client} onSuccess={() => {
-                      // Refresh client data after edit (handled by the component itself)
-                    }} />
+                    {client.notes ? (
+                      <p className="text-muted-foreground">{client.notes}</p>
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <p className="mb-4">No notes have been added for this client.</p>
+                        <EditNotesDialog 
+                          client={client} 
+                          variant="default"
+                          size="default"
+                          onSuccess={() => {
+                            // Refresh client data after editing notes
+                          }} 
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -398,81 +410,54 @@ export default function ClientDetails() {
                   { date: "Jan 01", value: 82, goal: 75 },
                   { date: "Jan 08", value: 81, goal: 75 },
                   { date: "Jan 15", value: 80, goal: 75 },
-                  { date: "Jan 22", value: 79, goal: 75 },
-                  { date: "Jan 29", value: 78, goal: 75 },
-                  { date: "Feb 05", value: 77, goal: 75 },
-                  { date: "Feb 12", value: 76.5, goal: 75 }
+                  { date: "Jan 22", value: 79.5, goal: 75 },
+                  { date: "Jan 29", value: 79, goal: 75 },
+                  { date: "Feb 05", value: 78.5, goal: 75 },
+                  { date: "Feb 12", value: 78, goal: 75 },
+                  { date: "Feb 19", value: 77.5, goal: 75 },
+                  { date: "Feb 26", value: 77, goal: 75 },
+                  { date: "Mar 05", value: 76.5, goal: 75 },
+                  { date: "Mar 12", value: 76, goal: 75 },
+                  { date: "Mar 19", value: 75.5, goal: 75 },
+                  { date: "Mar 26", value: 75, goal: 75 },
                 ]}
                 workoutData={[
-                  { date: "Jan 01", value: 3, goal: 4 },
-                  { date: "Jan 08", value: 4, goal: 4 },
+                  { date: "Jan 01", value: 2, goal: 4 },
+                  { date: "Jan 08", value: 3, goal: 4 },
                   { date: "Jan 15", value: 3, goal: 4 },
-                  { date: "Jan 22", value: 5, goal: 4 },
-                  { date: "Jan 29", value: 4, goal: 4 },
+                  { date: "Jan 22", value: 4, goal: 4 },
+                  { date: "Jan 29", value: 3, goal: 4 },
                   { date: "Feb 05", value: 4, goal: 4 },
-                  { date: "Feb 12", value: 5, goal: 4 }
+                  { date: "Feb 12", value: 4, goal: 4 },
+                  { date: "Feb 19", value: 3, goal: 4 },
+                  { date: "Feb 26", value: 5, goal: 4 },
+                  { date: "Mar 05", value: 4, goal: 4 },
+                  { date: "Mar 12", value: 4, goal: 4 },
+                  { date: "Mar 19", value: 4, goal: 4 },
+                  { date: "Mar 26", value: 4, goal: 4 },
                 ]}
                 nutritionData={[
-                  { date: "Jan 01", value: 65, goal: 80 },
-                  { date: "Jan 08", value: 70, goal: 80 },
-                  { date: "Jan 15", value: 75, goal: 80 },
-                  { date: "Jan 22", value: 72, goal: 80 },
-                  { date: "Jan 29", value: 78, goal: 80 },
-                  { date: "Feb 05", value: 82, goal: 80 },
-                  { date: "Feb 12", value: 85, goal: 80 }
+                  { date: "Jan 01", value: 70, goal: 90 },
+                  { date: "Jan 08", value: 75, goal: 90 },
+                  { date: "Jan 15", value: 80, goal: 90 },
+                  { date: "Jan 22", value: 78, goal: 90 },
+                  { date: "Jan 29", value: 85, goal: 90 },
+                  { date: "Feb 05", value: 82, goal: 90 },
+                  { date: "Feb 12", value: 87, goal: 90 },
+                  { date: "Feb 19", value: 85, goal: 90 },
+                  { date: "Feb 26", value: 90, goal: 90 },
+                  { date: "Mar 05", value: 92, goal: 90 },
+                  { date: "Mar 12", value: 88, goal: 90 },
+                  { date: "Mar 19", value: 93, goal: 90 },
+                  { date: "Mar 26", value: 95, goal: 90 },
                 ]}
-                streakCount={14}
+                streakCount={12}
               />
-              
-              {/* Habit Streak Tracker */}
-              <TrainerStreakView 
-                streakCount={14}
-                longestStreak={21}
-                totalCompletedDays={32}
-                streakDays={[
-                  { date: "Mon 06", completed: true, activities: ["Morning Workout", "Nutrition Plan"] },
-                  { date: "Tue 07", completed: true, activities: ["Cardio Session", "Meal Prep"] },
-                  { date: "Wed 08", completed: true, activities: ["Rest Day", "Nutrition Plan"] },
-                  { date: "Thu 09", completed: true, activities: ["Strength Training", "Recovery"] },
-                  { date: "Fri 10", completed: true, activities: ["HIIT Workout", "Nutrition Plan"] },
-                  { date: "Sat 11", completed: true, activities: ["Yoga Session", "Meal Prep"] },
-                  { date: "Sun 12", completed: true, activities: ["Active Recovery", "Nutrition Plan"] }
-                ]}
-                rewards={[
-                  { 
-                    id: 1, 
-                    name: "7-Day Streak", 
-                    description: "Completed activities for 7 days in a row", 
-                    icon: <Star className="h-6 w-6" />, 
-                    unlocked: true, 
-                    unlocksAt: 7 
-                  },
-                  { 
-                    id: 2, 
-                    name: "14-Day Streak", 
-                    description: "Completed activities for 14 days in a row", 
-                    icon: <Award className="h-6 w-6" />, 
-                    unlocked: true, 
-                    unlocksAt: 14 
-                  },
-                  { 
-                    id: 3, 
-                    name: "30-Day Streak", 
-                    description: "Completed activities for 30 days in a row", 
-                    icon: <Trophy className="h-6 w-6" />, 
-                    unlocked: false, 
-                    unlocksAt: 30 
-                  },
-                  { 
-                    id: 4, 
-                    name: "100-Day Streak", 
-                    description: "Completed activities for 100 days in a row", 
-                    icon: <Medal className="h-6 w-6" />, 
-                    unlocked: false, 
-                    unlocksAt: 100 
-                  }
-                ]}
-              />
+            </TabsContent>
+            
+            {/* Exercise Recommendations Tab */}
+            <TabsContent value="exercises" className="space-y-6">
+              <ClientExerciseRecommendations clientId={client.id} />
             </TabsContent>
 
             <TabsContent value="workouts" className="space-y-6">
@@ -482,56 +467,59 @@ export default function ClientDetails() {
                   Create Workout Plan
                 </Button>
               </div>
-
+              
               {isLoadingWorkouts ? (
-                <div className="flex items-center justify-center h-32">
+                <div className="flex items-center justify-center h-40">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : !workoutPlans || workoutPlans.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center p-10">
-                    <h3 className="text-xl font-medium mb-2">No Workout Plans</h3>
-                    <p className="text-muted-foreground mb-4">
-                      This client doesn't have any workout plans yet.
-                    </p>
-                    <Button>
-                      Create Workout Plan
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 gap-6">
+              ) : workoutPlans && workoutPlans.length > 0 ? (
+                <div className="space-y-6">
                   {workoutPlans.map((plan: any) => (
                     <Card key={plan.id}>
-                      <CardHeader>
+                      <CardHeader className="pb-2">
                         <div className="flex justify-between items-center">
-                          <CardTitle>{plan.name}</CardTitle>
-                          <Badge variant="outline">
-                            {plan.status || 'Active'}
+                          <div>
+                            <CardTitle>{plan.name}</CardTitle>
+                            <CardDescription>{plan.startDate} - {plan.endDate}</CardDescription>
+                          </div>
+                          <Badge variant={plan.status === 'Active' ? 'default' : 'outline'}>
+                            {plan.status}
                           </Badge>
                         </div>
-                        <CardDescription>
-                          {plan.startDate} - {plan.endDate || 'Ongoing'}
-                        </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <p className="mb-4">{plan.description}</p>
+                        <p className="text-muted-foreground mb-4">{plan.description}</p>
+                        
                         <div className="space-y-2">
                           {plan.workouts && plan.workouts.map((workout: any) => (
-                            <div key={workout.id} className="border rounded-md p-3 flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">{workout.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Day {workout.day} • {workout.exerciseCount} exercises
-                                </p>
+                            <div key={workout.id} className="flex justify-between px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                              <div className="flex items-center">
+                                <span className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 text-xs">
+                                  {workout.day}
+                                </span>
+                                <span>{workout.name}</span>
                               </div>
-                              <Button variant="ghost" size="sm">View</Button>
+                              <div className="flex gap-1 items-center">
+                                <span className="text-xs text-muted-foreground">{workout.exerciseCount} exercises</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Dumbbell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium mb-2">No Workout Plans</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    This client doesn't have any active workout plans. Create a new workout plan to get started.
+                  </p>
+                  <Button>Create Workout Plan</Button>
                 </div>
               )}
             </TabsContent>
@@ -543,180 +531,184 @@ export default function ClientDetails() {
                   Create Nutrition Plan
                 </Button>
               </div>
-
+              
               {isLoadingNutrition ? (
-                <div className="flex items-center justify-center h-32">
+                <div className="flex items-center justify-center h-40">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : !nutritionPlans || nutritionPlans.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center p-10">
-                    <h3 className="text-xl font-medium mb-2">No Nutrition Plans</h3>
-                    <p className="text-muted-foreground mb-4">
-                      This client doesn't have any nutrition plans yet.
-                    </p>
-                    <Button>
-                      Create Nutrition Plan
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 gap-6">
+              ) : nutritionPlans && nutritionPlans.length > 0 ? (
+                <div className="space-y-6">
                   {nutritionPlans.map((plan: any) => (
                     <Card key={plan.id}>
-                      <CardHeader>
+                      <CardHeader className="pb-2">
                         <div className="flex justify-between items-center">
-                          <CardTitle>{plan.name}</CardTitle>
-                          <Badge variant="outline">
-                            {plan.status || 'Active'}
+                          <div>
+                            <CardTitle>{plan.name}</CardTitle>
+                            <CardDescription>{plan.startDate} - {plan.endDate}</CardDescription>
+                          </div>
+                          <Badge variant={plan.status === 'Active' ? 'default' : 'outline'}>
+                            {plan.status}
                           </Badge>
                         </div>
-                        <CardDescription>
-                          {plan.startDate} - {plan.endDate || 'Ongoing'}
-                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p>{plan.description}</p>
+                      <CardContent>
+                        <p className="text-muted-foreground mb-4">{plan.description}</p>
                         
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-md text-center">
-                            <p className="text-xs text-muted-foreground">Daily Calories</p>
-                            <p className="font-medium">{plan.dailyCalories} kcal</p>
-                          </div>
-                          <div className="bg-green-100 dark:bg-green-900 p-3 rounded-md text-center">
-                            <p className="text-xs text-muted-foreground">Protein</p>
-                            <p className="font-medium">{plan.proteinPercentage}%</p>
-                          </div>
-                          <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-md text-center">
-                            <p className="text-xs text-muted-foreground">Carbs</p>
-                            <p className="font-medium">{plan.carbsPercentage}%</p>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-6">
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Daily Calories</p>
+                              <p className="text-xl font-bold">{plan.dailyCalories}</p>
+                              <p className="text-xs text-muted-foreground">kcal</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Protein</p>
+                              <p className="text-xl font-bold">{plan.protein}g</p>
+                              <p className="text-xs text-muted-foreground">
+                                {Math.round((plan.protein * 4 / plan.dailyCalories) * 100)}%
+                              </p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Fats</p>
+                              <p className="text-xl font-bold">{plan.fat}g</p>
+                              <p className="text-xs text-muted-foreground">
+                                {Math.round((plan.fat * 9 / plan.dailyCalories) * 100)}%
+                              </p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Carbs</p>
+                              <p className="text-xl font-bold">{plan.carbs}g</p>
+                              <p className="text-xs text-muted-foreground">
+                                {Math.round((plan.carbs * 4 / plan.dailyCalories) * 100)}%
+                              </p>
+                            </CardContent>
+                          </Card>
                         </div>
-
-                        <Button variant="outline" size="sm">View Full Plan</Button>
+                        
+                        <Button variant="outline" className="w-full">View Full Plan</Button>
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Pizza className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium mb-2">No Nutrition Plans</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    This client doesn't have any active nutrition plans. Create a new nutrition plan to get started.
+                  </p>
+                  <Button>Create Nutrition Plan</Button>
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="progress" className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Progress Tracking</h2>
+                <h2 className="text-2xl font-bold">Progress Records</h2>
                 <Button>
-                  Add New Record
+                  Add Progress Record
                 </Button>
               </div>
-
+              
               {isLoadingProgress ? (
-                <div className="flex items-center justify-center h-32">
+                <div className="flex items-center justify-center h-40">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : !progressRecords || progressRecords.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center p-10">
-                    <h3 className="text-xl font-medium mb-2">No Progress Records</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Start tracking this client's progress by adding their first record.
-                    </p>
-                    <Button>
-                      Add First Record
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Progress History</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {progressRecords.map((record: any) => (
-                        <div key={record.id} className="border-b pb-4 last:border-0">
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-medium">{record.date}</h3>
-                            <Button variant="ghost" size="sm">View Details</Button>
+              ) : progressRecords && progressRecords.length > 0 ? (
+                <div className="space-y-6">
+                  {progressRecords.map((record: any) => (
+                    <Card key={record.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle>Progress Record</CardTitle>
+                            <CardDescription>{record.date}</CardDescription>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Weight</p>
-                              <p className="font-medium">{record.weight} kg</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Body Fat</p>
-                              <p className="font-medium">{record.bodyFat || '--'}%</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Muscle Mass</p>
-                              <p className="font-medium">{record.muscleMass || '--'}%</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Photos</p>
-                              <p className="font-medium">{record.photoCount || 0}</p>
-                            </div>
-                          </div>
-                          {record.notes && (
-                            <p className="text-sm text-muted-foreground">{record.notes}</p>
-                          )}
+                          <Button variant="outline" size="sm">View Details</Button>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-6">
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Weight</p>
+                              <p className="text-xl font-bold">{record.weight} kg</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Body Fat</p>
+                              <p className="text-xl font-bold">{record.bodyFat}%</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Muscle Mass</p>
+                              <p className="text-xl font-bold">{record.muscleMass} kg</p>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4 text-center">
+                              <p className="text-xs text-muted-foreground mb-1">Waist</p>
+                              <p className="text-xl font-bold">{record.measurements.waist} cm</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                        
+                        {record.notes && (
+                          <div className="mb-4">
+                            <p className="text-sm font-medium mb-1">Notes</p>
+                            <p className="text-sm text-muted-foreground">{record.notes}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium mb-2">No Progress Records</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    This client doesn't have any progress records. Add a new progress record to start tracking their fitness journey.
+                  </p>
+                  <Button>Add Progress Record</Button>
+                </div>
               )}
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Messages</CardTitle>
-                  <CardDescription>Your conversation with {client.fullName}</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="flex flex-col h-[500px]">
-                    <div className="flex-1 overflow-y-auto p-4">
-                      {client.messages && client.messages.length > 0 ? (
-                        client.messages.map((message: any, index: number) => (
-                          <div 
-                            key={index}
-                            className={`mb-4 flex ${message.fromClient ? 'justify-start' : 'justify-end'}`}
-                          >
-                            <div 
-                              className={`max-w-[75%] rounded-lg p-3 ${
-                                message.fromClient 
-                                  ? 'bg-muted text-foreground' 
-                                  : 'bg-primary text-primary-foreground'
-                              }`}
-                            >
-                              <p>{message.content}</p>
-                              <p className={`text-xs mt-1 ${message.fromClient ? 'text-muted-foreground' : 'text-primary-foreground/80'}`}>
-                                {message.time}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <p className="text-xl font-medium mb-2">No messages yet</p>
-                            <p className="text-muted-foreground">Start a conversation with {client.fullName}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="border-t p-4">
-                      <div className="flex space-x-2">
-                        <textarea 
-                          className="flex-1 min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          placeholder={`Message ${client.fullName}...`}
-                        />
-                        <Button className="mt-auto">Send</Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Messages</h2>
+                <ClientMessageDialog 
+                  client={client} 
+                  onSuccess={() => {
+                    // Refresh messages after sending
+                  }} 
+                />
+              </div>
+              
+              <div className="text-center py-12">
+                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-medium mb-2">No Messages</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  You haven't exchanged any messages with this client yet. Send a message to start the conversation.
+                </p>
+                <ClientMessageDialog 
+                  client={client} 
+                  variant="default"
+                  size="default"
+                  onSuccess={() => {
+                    // Refresh messages after sending
+                  }} 
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
