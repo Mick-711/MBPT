@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Award, Trophy, Medal, Flame, Gift, Star, Crown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import confetti from 'canvas-confetti';
 
 interface ClientStreakTrackerProps {
   streakCount: number;
@@ -98,7 +101,21 @@ export default function ClientStreakTracker({
   
   const displayStreakDays = streakDays.length > 0 ? streakDays : defaultStreakDays;
   
-  // Removed openRewardDetails - achievement celebrations only shown on client view
+  const openRewardDetails = (reward: any) => {
+    setSelectedReward(reward);
+    setShowRewardDialog(true);
+    
+    if (reward.unlocked) {
+      // Trigger confetti when viewing an unlocked reward
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 300);
+    }
+  };
   
   return (
     <div>
@@ -159,11 +176,13 @@ export default function ClientStreakTracker({
             <h4 className="text-sm font-medium mb-2">Rewards</h4>
             <div className="grid grid-cols-5 gap-2">
               {processedRewards.map((reward) => (
-                <div
+                <Button
                   key={reward.id}
-                  className={`h-auto p-2 flex flex-col items-center border rounded-lg ${
-                    reward.unlocked ? 'border-primary' : 'border-muted opacity-70'
+                  variant="outline"
+                  className={`h-auto p-2 flex flex-col items-center ${
+                    reward.unlocked ? 'border-primary' : 'opacity-70'
                   }`}
+                  onClick={() => openRewardDetails(reward)}
                 >
                   <div className="mb-1">
                     {reward.unlocked ? reward.icon : (
@@ -196,6 +215,9 @@ export default function ClientStreakTracker({
                 </div>
                 <span>{selectedReward.name}</span>
               </DialogTitle>
+              <DialogDescription>
+                Achievement details
+              </DialogDescription>
             </DialogHeader>
             <div className="text-center py-4">
               <p className="mb-4">{selectedReward.description}</p>

@@ -21,55 +21,12 @@ interface TrainerStreakViewProps {
   }>;
 }
 
-const defaultRewards = [
-  {
-    id: 1,
-    name: "Dedication Badge",
-    description: "Completed 3 days in a row",
-    icon: <Medal className="h-8 w-8 text-blue-400" />,
-    unlocked: false,
-    unlocksAt: 3
-  },
-  {
-    id: 2,
-    name: "Consistency Award",
-    description: "Completed 7 days in a row",
-    icon: <Award className="h-8 w-8 text-green-400" />,
-    unlocked: false,
-    unlocksAt: 7
-  },
-  {
-    id: 3,
-    name: "Fitness Enthusiast",
-    description: "Completed 14 days in a row",
-    icon: <Flame className="h-8 w-8 text-orange-400" />,
-    unlocked: false,
-    unlocksAt: 14
-  },
-  {
-    id: 4,
-    name: "Health Champion",
-    description: "Completed 30 days in a row",
-    icon: <Trophy className="h-8 w-8 text-yellow-500" />,
-    unlocked: false,
-    unlocksAt: 30
-  },
-  {
-    id: 5,
-    name: "Fitness Legend",
-    description: "Completed 90 days in a row",
-    icon: <Crown className="h-8 w-8 text-purple-500" />,
-    unlocked: false,
-    unlocksAt: 90
-  }
-];
-
 export default function TrainerStreakView({ 
   streakCount = 5, 
   longestStreak = 12, 
   totalCompletedDays = 23,
   streakDays = [],
-  rewards = defaultRewards
+  rewards = []
 }: TrainerStreakViewProps) {
   
   // Process rewards to update unlocked status based on streak count
@@ -101,9 +58,9 @@ export default function TrainerStreakView({
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
             <Flame className="h-5 w-5 mr-2 text-orange-500" />
-            Client Streak Progress
+            Client Streak Tracking
           </CardTitle>
-          <CardDescription>Habit tracking and streak information</CardDescription>
+          <CardDescription>Client's habit adherence progress</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6">
@@ -151,7 +108,7 @@ export default function TrainerStreakView({
           </div>
           
           <div>
-            <h4 className="text-sm font-medium mb-2">Achievement Progress</h4>
+            <h4 className="text-sm font-medium mb-2">Achievement Milestones</h4>
             <div className="grid grid-cols-5 gap-2">
               {processedRewards.map((reward) => (
                 <div
