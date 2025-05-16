@@ -130,7 +130,10 @@ export default function WeightTrendChart({ weightData }: WeightTrendChartProps) 
               <span className="text-xs">Daily</span>
             </Badge>
             <Badge variant="outline" className="bg-background">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+              <div className="w-2 h-2 rounded-full mr-1" style={{ 
+                border: '2px solid rgb(59, 130, 246)',
+                backgroundColor: '#ffffff'
+              }}></div>
               <span className="text-xs">Weekly Avg</span>
             </Badge>
           </div>
@@ -187,11 +190,13 @@ export default function WeightTrendChart({ weightData }: WeightTrendChartProps) 
                 type="monotone" 
                 dataKey="weeklyAvg" 
                 stroke="rgb(59, 130, 246)" // blue-500
+                strokeOpacity={0.7}
                 fill="url(#colorWeeklyAvg)"
                 fillOpacity={0}
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 5, fill: "rgb(59, 130, 246)" }}
+                strokeWidth={2}
+                strokeDasharray="4 2"
+                dot={{ r: 3, strokeWidth: 2, fill: "#ffffff", stroke: "rgb(59, 130, 246)" }}
+                activeDot={{ r: 5, strokeWidth: 2, fill: "#ffffff", stroke: "rgb(59, 130, 246)" }}
               />
             </AreaChart>
           </ResponsiveContainer>
