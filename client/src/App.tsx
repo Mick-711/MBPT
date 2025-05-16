@@ -22,6 +22,8 @@ import ClientDetails from "@/pages/clients/client-details";
 import WorkoutsList from "@/pages/workouts/index";
 import CreateWorkout from "@/pages/workouts/create";
 import ViewSwitcher from "@/pages/view-switcher";
+import ExercisesLibrary from "@/pages/exercises/index";
+import NewExercise from "@/pages/exercises/new";
 
 // Mobile client pages
 import ClientDashboard from "./pages/mobile/client/dashboard";
@@ -166,6 +168,10 @@ function Router() {
       <Route path="/clients/:id" component={ClientDetails} />
       <Route path="/workouts" component={WorkoutsList} />
       <Route path="/workouts/create" component={CreateWorkout} />
+      
+      {/* Exercise Library routes */}
+      <Route path="/exercises" component={ExercisesLibrary} />
+      <Route path="/exercises/new" component={NewExercise} />
       
       <Route component={NotFound} />
     </Switch>
