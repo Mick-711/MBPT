@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Calendar, Dumbbell, Mail, MessageSquare, Pizza, User, UserCog, ChevronLeft, Heart } from 'lucide-react';
 import ClientHealthMetricsTab from '@/components/clients/client-health-metrics-tab';
+import { EditProfileDialog } from '@/components/clients/edit-profile-dialog';
+import { EditNotesDialog } from '@/components/clients/edit-notes-dialog';
 
 export default function ClientDetails() {
   const { id } = useParams();
@@ -219,10 +221,9 @@ export default function ClientDetails() {
               </div>
 
               <div className="flex justify-between mt-6 pt-6 border-t">
-                <Button variant="outline" size="sm">
-                  <UserCog className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
+                <EditProfileDialog client={client} onSuccess={() => {
+                  // Refresh client data after edit (handled by the component itself)
+                }} />
                 <Button variant="outline" size="sm">
                   <Mail className="mr-2 h-4 w-4" />
                   Message
@@ -332,9 +333,9 @@ export default function ClientDetails() {
                     <p className="text-muted-foreground mb-4">
                       {client.notes || 'No notes available for this client.'}
                     </p>
-                    <Button variant="outline" size="sm">
-                      Add Note
-                    </Button>
+                    <EditNotesDialog client={client} onSuccess={() => {
+                      // Refresh client data after edit (handled by the component itself)
+                    }} />
                   </CardContent>
                 </Card>
               </div>
