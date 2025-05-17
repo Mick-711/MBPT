@@ -1125,6 +1125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Register our food database routes
+  app.use('/api/foods', require('./routes/foods').default);
+  app.use('/api/nuttab', require('./routes/nuttab').default);
+  
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;

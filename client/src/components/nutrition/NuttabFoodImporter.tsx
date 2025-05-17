@@ -12,6 +12,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 import { FoodData } from '@/lib/nutritionHelpers';
 
+// Define interface for food data from NUTTAB API
+interface NuttabFoodData {
+  id: number;
+  name: string;
+  category: string;
+  servingSize: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
 export default function NuttabFoodImporter() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NuttabFoodData[]>([]);
@@ -21,7 +35,7 @@ export default function NuttabFoodImporter() {
   const queryClient = useQueryClient();
 
   // Handle search submission
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!query.trim()) {
@@ -33,9 +47,19 @@ export default function NuttabFoodImporter() {
       return;
     }
     
-    const results = searchNuttabFoods(query);
-    setSearchResults(results);
-    setSelectedFoods([]); // Reset selections
+    try {
+      // Call our PostgreSQL database API endpoint
+      const response = await axios.post('/api/nuttab/search', { query: query.trim() });
+      setSearchResults(response.data.foods);
+      setSelectedFoods([]); // Reset selections
+    } catch (error) {
+      console.error('Error searching database:', error);
+      toast({
+        title: "Search failed",
+        description: "Failed to search the food database. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Toggle food selection
@@ -73,35 +97,17 @@ export default function NuttabFoodImporter() {
         selectedFoods.includes(food.id)
       );
       
-      // Get existing foods from storage
-      const existingFoods = JSON.parse(localStorage.getItem('foods') || '[]');
-      
-      // Get the highest existing ID
-      const highestId = existingFoods.length > 0 
-        ? Math.max(...existingFoods.map((food: FoodData) => food.id)) 
-        : 0;
-      
-      // Convert NUTTAB foods to full FoodData format with new IDs
-      const foodsWithIds = foodsToImport.map((food, index) => {
-        // Create a complete FoodData object with required fields
-        return {
-          ...convertToFoodData(food),
-          id: highestId + index + 1
-        };
+      // Import foods to PostgreSQL database
+      const response = await axios.post('/api/nuttab/import', {
+        foods: foodsToImport
       });
       
-      // Combine existing and new foods
-      const updatedFoods = [...existingFoods, ...foodsWithIds];
-      
-      // Save to local storage
-      localStorage.setItem('foods', JSON.stringify(updatedFoods));
-      
       // Invalidate foods cache to refresh data
-      queryClient.invalidateQueries({ queryKey: ['foods'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/foods'] });
       
       toast({
         title: "Foods imported successfully",
-        description: `${foodsWithIds.length} foods have been added to your database.`,
+        description: `${response.data.foods.length} foods have been added to the database.`,
         variant: "default"
       });
       
@@ -110,6 +116,7 @@ export default function NuttabFoodImporter() {
       setSelectedFoods([]);
       setQuery('');
     } catch (error) {
+      console.error('Error importing foods:', error);
       toast({
         title: "Import failed",
         description: "Failed to import foods to database.",

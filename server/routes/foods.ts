@@ -1,13 +1,27 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { foods, insertFoodSchema } from '@shared/schema';
+import { eq, like, sql } from 'drizzle-orm';
+import { z } from 'zod';
 
 const router = Router();
 
-// Get all foods
+// Get all foods (with optional filters)
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const allFoods = await db.select().from(foods);
+    const { search, category } = req.query;
+    
+    let query = db.select().from(foods);
+    
+    if (search && typeof search === 'string') {
+      query = query.where(like(foods.name, `%${search}%`));
+    }
+    
+    if (category && typeof category === 'string') {
+      query = query.where(eq(foods.category, category));
+    }
+    
+    const allFoods = await query;
     res.json(allFoods);
   } catch (error) {
     console.error('Error fetching foods:', error);
@@ -15,108 +29,87 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Search foods
-router.get('/search', async (req: Request, res: Response) => {
-  try {
-    const { query } = req.query;
-    
-    if (!query) {
-      return res.json([]);
-    }
-
-    const searchTerm = `%${query}%`;
-    
-    const results = await db.select()
-      .from(foods)
-      .where(sql => sql`LOWER(${foods.name}) LIKE LOWER(${searchTerm}) OR LOWER(${foods.category}::text) LIKE LOWER(${searchTerm})`);
-    
-    res.json(results);
-  } catch (error) {
-    console.error('Error searching foods:', error);
-    res.status(500).json({ error: 'Failed to search foods' });
-  }
-});
-
-// Get food by ID
+// Get a single food by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const food = await db.select().from(foods).where(sql => sql`${foods.id} = ${parseInt(id)}`).limit(1);
+    const [food] = await db.select().from(foods).where(eq(foods.id, parseInt(id)));
     
-    if (food.length === 0) {
+    if (!food) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json(food[0]);
+    res.json(food);
   } catch (error) {
     console.error('Error fetching food:', error);
     res.status(500).json({ error: 'Failed to fetch food' });
   }
 });
 
-// Create new food
+// Create a new food
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const foodData = req.body;
+    const result = insertFoodSchema.safeParse(req.body);
     
-    // Validate the request body
-    const parsed = insertFoodSchema.safeParse(foodData);
-    if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid food data', details: parsed.error });
+    if (!result.success) {
+      return res.status(400).json({ error: 'Invalid food data', details: result.error.format() });
     }
     
-    // Set created_by to the current user if authenticated
-    if (req.session?.userId) {
-      foodData.createdBy = req.session.userId;
-    }
+    const newFood = {
+      ...result.data,
+      createdBy: req.session?.userId || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
     
-    const [newFood] = await db.insert(foods).values(foodData).returning();
-    res.status(201).json(newFood);
+    const [createdFood] = await db.insert(foods).values(newFood).returning();
+    res.status(201).json(createdFood);
   } catch (error) {
     console.error('Error creating food:', error);
     res.status(500).json({ error: 'Failed to create food' });
   }
 });
 
-// Import multiple foods (batch insert)
-router.post('/import', async (req: Request, res: Response) => {
-  try {
-    const { foods: foodsToImport } = req.body;
-    
-    if (!Array.isArray(foodsToImport) || foodsToImport.length === 0) {
-      return res.status(400).json({ error: 'Invalid food data. Expected array of foods.' });
-    }
-
-    // Set created_by to the current user if authenticated
-    if (req.session?.userId) {
-      foodsToImport.forEach(food => {
-        food.createdBy = req.session.userId;
-      });
-    }
-    
-    const newFoods = await db.insert(foods).values(foodsToImport).returning();
-    res.status(201).json(newFoods);
-  } catch (error) {
-    console.error('Error importing foods:', error);
-    res.status(500).json({ error: 'Failed to import foods' });
-  }
-});
-
-// Update food
+// Update a food
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-
-    const [updatedFood] = await db
-      .update(foods)
-      .set({ ...updateData, updatedAt: new Date() })
-      .where(sql => sql`${foods.id} = ${parseInt(id)}`)
-      .returning();
+    const foodId = parseInt(id);
     
-    if (!updatedFood) {
+    // Check if food exists
+    const [existingFood] = await db.select().from(foods).where(eq(foods.id, foodId));
+    
+    if (!existingFood) {
       return res.status(404).json({ error: 'Food not found' });
     }
+    
+    // Validate input data
+    const updateFoodSchema = z.object({
+      name: z.string().optional(),
+      category: z.string().optional(),
+      servingSize: z.number().positive().optional(),
+      servingUnit: z.string().optional(),
+      calories: z.number().nonnegative().optional(),
+      protein: z.number().nonnegative().optional(),
+      carbs: z.number().nonnegative().optional(),
+      fat: z.number().nonnegative().optional(),
+      fiber: z.number().nonnegative().optional(),
+      isPublic: z.boolean().optional()
+    });
+    
+    const result = updateFoodSchema.safeParse(req.body);
+    
+    if (!result.success) {
+      return res.status(400).json({ error: 'Invalid food data', details: result.error.format() });
+    }
+    
+    const [updatedFood] = await db.update(foods)
+      .set({
+        ...result.data,
+        updatedAt: new Date()
+      })
+      .where(eq(foods.id, foodId))
+      .returning();
     
     res.json(updatedFood);
   } catch (error) {
@@ -125,24 +118,58 @@ router.patch('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Delete food
+// Delete a food
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const foodId = parseInt(id);
     
-    const [deletedFood] = await db
-      .delete(foods)
-      .where(sql => sql`${foods.id} = ${parseInt(id)}`)
-      .returning();
+    // Check if food exists
+    const [existingFood] = await db.select().from(foods).where(eq(foods.id, foodId));
     
-    if (!deletedFood) {
+    if (!existingFood) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json({ message: 'Food deleted successfully' });
+    await db.delete(foods).where(eq(foods.id, foodId));
+    
+    res.status(204).send();
   } catch (error) {
     console.error('Error deleting food:', error);
     res.status(500).json({ error: 'Failed to delete food' });
+  }
+});
+
+// Get food suggestions by category
+router.get('/suggestions/by-category', async (req: Request, res: Response) => {
+  try {
+    // Get popular foods by category
+    const proteinFoods = await db
+      .select()
+      .from(foods)
+      .where(eq(foods.category, 'protein'))
+      .limit(5);
+    
+    const carbFoods = await db
+      .select()
+      .from(foods)
+      .where(eq(foods.category, 'carbs'))
+      .limit(5);
+    
+    const fatFoods = await db
+      .select()
+      .from(foods)
+      .where(eq(foods.category, 'fat'))
+      .limit(5);
+    
+    res.json({
+      protein: proteinFoods,
+      carbs: carbFoods,
+      fat: fatFoods
+    });
+  } catch (error) {
+    console.error('Error getting food suggestions:', error);
+    res.status(500).json({ error: 'Failed to get food suggestions' });
   }
 });
 
