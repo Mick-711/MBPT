@@ -186,6 +186,15 @@ function Router() {
       <Route path="/nutrition" component={NutritionDashboard} />
       <Route path="/nutrition/food-database" component={FoodDatabase} />
       <Route path="/nutrition/food-database/new" component={AddFood} />
+      <Route path="/nutrition/food-database/nuttab-import">
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        }>
+          {React.createElement(React.lazy(() => import('./pages/nutrition/food-database/nuttab-import')))}
+        </Suspense>
+      </Route>
       <Route path="/nutrition/meal-plans" component={MealPlans} />
       <Route path="/nutrition/meal-plans/new">
         <Suspense fallback={
