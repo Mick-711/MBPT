@@ -155,14 +155,14 @@ export default function NutritionPage() {
                   <CardContent className="p-4 pt-0">
                     <div className="text-sm flex items-center gap-2 mb-2">
                       <List className="h-4 w-4 text-muted-foreground" />
-                      <span>{template.meals?.length || 0} meals</span>
+                      <span>{template.meals ? template.meals.length : 0} meals</span>
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button 
                         variant="outline" 
                         size="sm" 
                         className="w-full"
-                        onClick={() => navigate(`/nutrition/meal-plans/${template.id}`)}
+                        onClick={() => navigate(`/nutrition/meal-plans?id=${template.id}`)}
                       >
                         View
                       </Button>

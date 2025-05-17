@@ -187,6 +187,7 @@ function Router() {
       <Route path="/nutrition/food-database" component={FoodDatabase} />
       <Route path="/nutrition/food-database/new" component={AddFood} />
       <Route path="/nutrition/meal-plans" component={MealPlans} />
+      <Route path="/nutrition/meal-plans/new" component={React.lazy(() => import('./pages/nutrition/meal-plans/new'))} />
       <Route path="/nutrition/calculator" component={MacroCalculator} />
       
       <Route component={NotFound} />
