@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Download, Check, Search } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Search, Download, Check, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,21 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { fetchNuttabFoods, importFoodsToDatabase } from '@/lib/foodDatabaseAPI';
 import { FoodData } from '@/lib/nutritionHelpers';
+import { nuttabFoods, searchNuttabFoods, convertToFoodData, NuttabFoodData } from '@/data/nuttabFoods';
 
 export default function NuttabFoodImporter() {
   const [query, setQuery] = useState('');
-  const [searchCount, setSearchCount] = useState(10);
-  const [searchResults, setSearchResults] = useState<FoodData[]>([]);
+  const [searchResults, setSearchResults] = useState<NuttabFoodData[]>([]);
   const [selectedFoods, setSelectedFoods] = useState<number[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Handle search submission
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!query.trim()) {
@@ -35,20 +33,9 @@ export default function NuttabFoodImporter() {
       return;
     }
     
-    try {
-      setIsSearching(true);
-      const foods = await fetchNuttabFoods(query, searchCount);
-      setSearchResults(foods);
-      setSelectedFoods([]); // Reset selections
-    } catch (error) {
-      toast({
-        title: "Search failed",
-        description: error.message || "Failed to fetch foods from NUTTAB database.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
-    }
+    const results = searchNuttabFoods(query);
+    setSearchResults(results);
+    setSelectedFoods([]); // Reset selections
   };
 
   // Toggle food selection
@@ -86,14 +73,35 @@ export default function NuttabFoodImporter() {
         selectedFoods.includes(food.id)
       );
       
-      const importedFoods = await importFoodsToDatabase(foodsToImport);
+      // Get existing foods from storage
+      const existingFoods = JSON.parse(localStorage.getItem('foods') || '[]');
+      
+      // Get the highest existing ID
+      const highestId = existingFoods.length > 0 
+        ? Math.max(...existingFoods.map((food: FoodData) => food.id)) 
+        : 0;
+      
+      // Convert NUTTAB foods to full FoodData format with new IDs
+      const foodsWithIds = foodsToImport.map((food, index) => {
+        // Create a complete FoodData object with required fields
+        return {
+          ...convertToFoodData(food),
+          id: highestId + index + 1
+        };
+      });
+      
+      // Combine existing and new foods
+      const updatedFoods = [...existingFoods, ...foodsWithIds];
+      
+      // Save to local storage
+      localStorage.setItem('foods', JSON.stringify(updatedFoods));
       
       // Invalidate foods cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['foods'] });
       
       toast({
         title: "Foods imported successfully",
-        description: `${importedFoods.length} foods have been added to your database.`,
+        description: `${foodsWithIds.length} foods have been added to your database.`,
         variant: "default"
       });
       
@@ -104,7 +112,7 @@ export default function NuttabFoodImporter() {
     } catch (error) {
       toast({
         title: "Import failed",
-        description: error.message || "Failed to import foods to database.",
+        description: "Failed to import foods to database.",
         variant: "destructive"
       });
     } finally {
@@ -138,29 +146,9 @@ export default function NuttabFoodImporter() {
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1"
               />
-              <div className="w-24">
-                <Input
-                  id="search-count"
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={searchCount}
-                  onChange={(e) => setSearchCount(parseInt(e.target.value) || 10)}
-                  className="w-full"
-                />
-              </div>
-              <Button type="submit" disabled={isSearching} className="w-28">
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Search
-                  </>
-                )}
+              <Button type="submit">
+                <Search className="mr-2 h-4 w-4" />
+                Search
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -187,7 +175,7 @@ export default function NuttabFoodImporter() {
                 >
                   {isImporting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
                       Importing...
                     </>
                   ) : (
@@ -245,6 +233,19 @@ export default function NuttabFoodImporter() {
             </div>
           </div>
         )}
+        
+        {query && searchResults.length === 0 && (
+          <div className="mt-6 text-center p-8 border rounded-md">
+            <X className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+            <h3 className="text-xl font-medium mb-2">No Results Found</h3>
+            <p className="text-muted-foreground mb-2">
+              No foods matching "{query}" were found in the NUTTAB database.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Try using more general terms or check your spelling.
+            </p>
+          </div>
+        )}
       </CardContent>
       
       {searchResults.length > 0 && (
@@ -256,7 +257,7 @@ export default function NuttabFoodImporter() {
           >
             {isImporting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
                 Importing Selected Foods...
               </>
             ) : (
