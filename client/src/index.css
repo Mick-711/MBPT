@@ -107,6 +107,10 @@
     @apply py-3; /* Reduce vertical padding in card headers */
   }
   
+  .card-header h2 + p {
+    @apply font-medium text-gray-600; /* Make card descriptions more visible */
+  }
+  
   .card-content {
     @apply py-3; /* Reduce vertical padding in card content */
   }
