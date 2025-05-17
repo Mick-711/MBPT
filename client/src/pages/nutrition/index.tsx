@@ -89,13 +89,24 @@ export default function NutritionPage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/food-database/new')}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 mb-2">
-                <path d="M18 6h-9.5L6 8.5V9c0 .28.22.5.5.5h13.22" />
-                <path d="M20 15c0-1.66-1.34-3-3-3h-1c-1.66 0-3 1.34-3 3h-2c0-1.66-1.34-3-3-3H7c-1.66 0-3 1.34-3 3" />
-                <path d="M11 3h2v3h-2z" />
-                <path d="M3 15h18v2c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-2z" />
-                <path d="M7 10v1" />
-                <path d="M17 10v1" />
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className="h-6 w-6 mb-2"
+              >
+                <path d="M6 11.5c0 1 .6 3 2 3s2-2 2-3c0-.7-.4-1.6-1-2l-2-1c-.6-.4-1-1.3-1-2 0-1 .6-3 2-3s2 2 2 3" />
+                <path d="m7 3-3 2" />
+                <path d="m7 3 3 2" />
+                <path d="M18 12c-.5 0-1.8.4-2.5.9l-1.5 1c-.7.5-1 1.3-1 2.1s.3 1.6 1 2.1l1.5 1c.7.5 2 .9 2.5.9" />
+                <path d="M18 12c1 0 3 .6 3 2s-2 2-3 2" />
+                <path d="M18 22c-1 0-3-.6-3-2s2-2 3-2" />
               </svg>
               <span>Add New Food</span>
             </Button>
