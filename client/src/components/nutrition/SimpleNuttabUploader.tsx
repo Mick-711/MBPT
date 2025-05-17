@@ -23,8 +23,8 @@ export default function SimpleNuttabUploader() {
     }
   };
 
-  // Create a test foods array
-  const handleSimulateImport = () => {
+  // Process and upload NUTTAB food data
+  const handleFileUpload = async () => {
     if (!file) {
       toast({
         title: "No file selected",
@@ -36,95 +36,199 @@ export default function SimpleNuttabUploader() {
 
     setIsUploading(true);
     
-    // Simulate successful import after a delay
-    setTimeout(() => {
-      // Sample foods data that would come from parsing the Excel file
-      const sampleFoods = [
-        {
-          id: 1001,
-          name: "Chicken Breast",
-          brand: "NUTTAB",
-          category: "protein",
-          servingSize: 100,
-          servingUnit: "g",
-          calories: 165,
-          protein: 31,
-          carbs: 0,
-          fat: 3.6,
-          fiber: 0
-        },
-        {
-          id: 1002,
-          name: "Brown Rice",
-          brand: "NUTTAB",
-          category: "carbs",
-          servingSize: 100,
-          servingUnit: "g",
-          calories: 112,
-          protein: 2.6,
-          carbs: 24,
-          fat: 0.9,
-          fiber: 1.8
-        },
-        {
-          id: 1003,
-          name: "Salmon Fillet",
-          brand: "NUTTAB",
-          category: "protein",
-          servingSize: 100,
-          servingUnit: "g",
-          calories: 206,
-          protein: 22,
-          carbs: 0,
-          fat: 13,
-          fiber: 0
-        },
-        {
-          id: 1004,
-          name: "Spinach",
-          brand: "NUTTAB",
-          category: "vegetable",
-          servingSize: 100,
-          servingUnit: "g",
-          calories: 23,
-          protein: 2.9,
-          carbs: 3.6,
-          fat: 0.4,
-          fiber: 2.2
-        },
-        {
-          id: 1005,
-          name: "Avocado",
-          brand: "NUTTAB",
-          category: "fat",
-          servingSize: 100,
-          servingUnit: "g",
-          calories: 160,
-          protein: 2,
-          carbs: 8.5,
-          fat: 14.7,
-          fiber: 6.7
+    try {
+      // Create a FormData object to send the file
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // First, process the Excel file on the client-side to handle large files better
+      // This uses the xlsx library which has been added to the project
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const data = e.target?.result;
+          if (!data) {
+            throw new Error("Failed to read file");
+          }
+          
+          const workbook = await import('xlsx').then(XLSX => {
+            // Parse the Excel data
+            return XLSX.read(data, { type: 'binary' });
+          });
+          
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = await import('xlsx').then(XLSX => {
+            return XLSX.utils.sheet_to_json(worksheet);
+          });
+          
+          console.log(`Processed ${jsonData.length} rows from Excel file`);
+          
+          if (jsonData.length === 0) {
+            throw new Error("No data found in Excel file");
+          }
+          
+          // Process and map the data to our food format
+          const processedFoods = jsonData.map((row: any, index) => {
+            // Extract fields based on common NUTTAB column names
+            const name = row['Food Name'] || row['Name'] || row['FOOD_NAME'] || row['Food_Name'] || row['food_name'];
+            const category = row['Food Group'] || row['Category'] || row['FOOD_GROUP'] || row['Food_Group'] || row['food_group'] || 'other';
+            const servingSize = parseFloat(row['Serving Size'] || row['SERVE_SIZE'] || row['Serve_Size'] || row['serving_size'] || '100') || 100;
+            const servingUnit = row['Serving Unit'] || row['SERVE_UNIT'] || row['Serve_Unit'] || row['serving_unit'] || 'g';
+            
+            // Convert kJ to kcal if energy is in kJ
+            let calories = 0;
+            if (row['Energy (kJ)'] || row['ENERGY (kJ)'] || row['Energy']) {
+              const energyValue = parseFloat(row['Energy (kJ)'] || row['ENERGY (kJ)'] || row['Energy'] || '0');
+              calories = energyValue / 4.184; // Convert kJ to kcal
+            } else if (row['Calories'] || row['CALORIES'] || row['calories']) {
+              calories = parseFloat(row['Calories'] || row['CALORIES'] || row['calories'] || '0');
+            }
+            
+            // Extract macronutrients
+            const protein = parseFloat(row['Protein (g)'] || row['Protein'] || row['PROTEIN'] || '0') || 0;
+            const carbs = parseFloat(row['Carbohydrate (g)'] || row['Carbs'] || row['CARBOHYDRATE'] || row['carbs'] || row['carbohydrate'] || '0') || 0;
+            const fat = parseFloat(row['Fat, total (g)'] || row['Fat'] || row['FAT'] || row['fat'] || '0') || 0;
+            const fiber = parseFloat(row['Fibre (g)'] || row['Fiber (g)'] || row['Fiber'] || row['FIBRE'] || row['fibre'] || row['fiber'] || '0') || 0;
+            const sugar = parseFloat(row['Sugars (g)'] || row['Sugar (g)'] || row['Sugar'] || row['SUGARS'] || row['sugar'] || row['sugars'] || '0') || 0;
+            const sodium = parseFloat(row['Sodium (mg)'] || row['SODIUM'] || row['sodium'] || '0') || 0;
+            
+            // Map the category to our food categories
+            let mappedCategory = 'other';
+            
+            // Map common food groups to our categories
+            const categoryMapping: Record<string, string> = {
+              'meat': 'protein',
+              'poultry': 'protein', 
+              'fish': 'protein',
+              'seafood': 'protein',
+              'egg': 'protein',
+              'legume': 'protein',
+              'grain': 'carbs',
+              'bread': 'carbs',
+              'cereal': 'carbs',
+              'rice': 'carbs',
+              'pasta': 'carbs',
+              'fruit': 'fruit',
+              'vegetable': 'vegetable',
+              'dairy': 'dairy',
+              'milk': 'dairy',
+              'cheese': 'dairy',
+              'yoghurt': 'dairy',
+              'yogurt': 'dairy',
+              'nut': 'nuts',
+              'seed': 'seeds',
+              'oil': 'fat',
+              'butter': 'fat',
+              'margarine': 'fat'
+            };
+            
+            // Try to match the category with our mapping
+            const lowerCategory = category.toLowerCase();
+            for (const [key, value] of Object.entries(categoryMapping)) {
+              if (lowerCategory.includes(key)) {
+                mappedCategory = value;
+                break;
+              }
+            }
+            
+            return {
+              name: name || `NUTTAB Food ${index + 1}`,
+              brand: 'NUTTAB',
+              category: mappedCategory,
+              servingSize,
+              servingUnit,
+              calories: Math.round(calories * 10) / 10, // Round to 1 decimal place
+              protein: Math.round(protein * 10) / 10,
+              carbs: Math.round(carbs * 10) / 10,
+              fat: Math.round(fat * 10) / 10,
+              fiber: Math.round(fiber * 10) / 10,
+              sugar: Math.round(sugar * 10) / 10,
+              sodium: Math.round(sodium),
+              isPublic: true
+            };
+          });
+          
+          // Now save the processed foods to the database
+          try {
+            const response = await axios.post('/api/foods/batch', {
+              foods: processedFoods
+            });
+            
+            setResults({
+              success: true,
+              message: "Successfully imported foods from Excel file",
+              totalProcessed: processedFoods.length,
+              foods: response.data.foods || processedFoods.slice(0, 10) // Show at most 10 foods as a sample
+            });
+            
+            // Invalidate food cache to refresh the UI
+            queryClient.invalidateQueries({ queryKey: ['/api/foods'] });
+            
+            toast({
+              title: "Import successful",
+              description: `Successfully imported ${processedFoods.length} foods from the Excel file.`,
+              variant: "default"
+            });
+          } catch (error) {
+            console.error('Error saving foods to database:', error);
+            
+            // Even if the database save fails, show the processed foods
+            setResults({
+              success: false,
+              message: "Failed to save foods to database. Please try again.",
+              totalProcessed: processedFoods.length,
+              foods: processedFoods.slice(0, 10) // Show the first 10 foods
+            });
+            
+            toast({
+              title: "Import failed",
+              description: "Failed to save foods to database. Please try again.",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          console.error('Error processing Excel file:', error);
+          setResults({
+            success: false,
+            message: error.message || "Failed to process Excel file",
+            totalProcessed: 0,
+            foods: []
+          });
+          
+          toast({
+            title: "Processing failed",
+            description: error.message || "Failed to process Excel file. Please check the file format.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsUploading(false);
         }
-      ];
+      };
       
-      setResults({
-        success: true,
-        message: "Successfully imported foods from Excel file",
-        totalProcessed: sampleFoods.length,
-        foods: sampleFoods
-      });
+      reader.onerror = () => {
+        toast({
+          title: "File reading failed",
+          description: "Failed to read the Excel file. Please try again.",
+          variant: "destructive"
+        });
+        setIsUploading(false);
+      };
       
-      // Invalidate food cache
-      queryClient.invalidateQueries({ queryKey: ['/api/foods'] });
+      // Start reading the file as a binary string
+      reader.readAsBinaryString(file);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setIsUploading(false);
       
       toast({
-        title: "Import successful",
-        description: `Successfully imported ${sampleFoods.length} foods from the Excel file.`,
-        variant: "default"
+        title: "Upload failed",
+        description: "Failed to upload the Excel file. Please try again.",
+        variant: "destructive"
       });
-      
-      setIsUploading(false);
-    }, 1500);
+    }
   };
 
   const reset = () => {
@@ -193,7 +297,7 @@ export default function SimpleNuttabUploader() {
                     Change File
                   </Button>
                   <Button 
-                    onClick={handleSimulateImport}
+                    onClick={handleFileUpload}
                     disabled={isUploading}
                   >
                     {isUploading ? (
