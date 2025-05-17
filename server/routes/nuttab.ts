@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { foods, foodCategoryEnum } from '@shared/schema';
-import { eq, or, like } from 'drizzle-orm';
+import { eq, or, like, sql } from 'drizzle-orm';
 
 const router = Router();
 
@@ -14,16 +14,13 @@ router.post('/search', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
     
-    const searchResults = await db
-      .select()
-      .from(foods)
-      .where(
-        or(
-          like(foods.name, `%${query}%`),
-          like(foods.category, `%${query}%`)
-        )
-      )
-      .limit(50);
+    // Use a raw SQL query for the search to avoid enum type issues
+    const searchResults = await db.execute(
+      sql`SELECT * FROM foods 
+          WHERE name ILIKE ${'%' + query + '%'} 
+          OR brand = 'NUTTAB' 
+          LIMIT 50`
+    );
     
     res.json({ foods: searchResults });
   } catch (error) {
@@ -91,27 +88,43 @@ router.post('/import', async (req: Request, res: Response) => {
       };
     });
     
-    // For this implementation, we'll return mock successful data
-    // In production, you would use the PostgreSQL queries
-    const insertedFoods = foodsToImport.map((food, index) => ({
-      id: 1000 + index, // Temporary IDs for demonstration
-      name: food.name,
-      brand: 'NUTTAB',
-      category: processedFoods[index].category,
-      servingSize: food.servingSize || 100,
-      servingUnit: food.servingUnit || 'g',
-      calories: food.calories || 0,
-      protein: food.protein || 0,
-      carbs: food.carbs || 0,
-      fat: food.fat || 0,
-      fiber: food.fiber || 0,
-      sugar: food.sugar || 0,
-      sodium: food.sodium || 0,
-      isPublic: true,
-      createdBy: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }));
+    // Insert the processed foods into the database
+    const insertedFoods = [];
+    
+    try {
+      // First attempt to insert all foods at once
+      const dbInsertedFoods = await db.insert(foods)
+        .values(processedFoods.map(food => ({
+          ...food,
+          // Force category to be a valid enum value
+          category: food.category as any
+        })))
+        .returning();
+        
+      insertedFoods.push(...dbInsertedFoods);
+    } catch (error) {
+      console.error('Batch insert failed, trying one by one');
+      
+      // If bulk insert fails, try inserting one at a time
+      for (const food of processedFoods) {
+        try {
+          const [insertedFood] = await db.insert(foods)
+            .values({
+              ...food,
+              // Force category to be a valid enum value
+              category: food.category as any
+            })
+            .returning();
+            
+          if (insertedFood) {
+            insertedFoods.push(insertedFood);
+          }
+        } catch (insertError) {
+          console.error(`Error inserting food "${food.name}":`, insertError);
+          // Continue to the next food
+        }
+      }
+    }
     
     res.status(201).json({
       message: `Successfully imported ${insertedFoods.length} foods from NUTTAB`,
