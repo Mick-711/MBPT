@@ -254,7 +254,7 @@ export default function NutritionPage() {
         }} 
         className="space-y-4"
       >
-        <TabsList>
+        <TabsList className="tabs-list">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="mealPlans">Meal Plans</TabsTrigger>
           <TabsTrigger value="foodDatabase">Food Database</TabsTrigger>
