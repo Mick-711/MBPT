@@ -5,7 +5,7 @@ import { ChevronLeft, Search, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NuttabFoodImporter from '@/components/nutrition/NuttabFoodImporter';
-import NuttabExcelUploader from '@/components/nutrition/NuttabExcelUploader';
+import SimpleNuttabUploader from '@/components/nutrition/SimpleNuttabUploader';
 
 export default function NuttabImportPage() {
   const [, navigate] = useLocation();
@@ -46,7 +46,7 @@ export default function NuttabImportPage() {
         </TabsContent>
         
         <TabsContent value="excel" className="mt-0">
-          <NuttabExcelUploader />
+          <SimpleNuttabUploader />
         </TabsContent>
       </Tabs>
       

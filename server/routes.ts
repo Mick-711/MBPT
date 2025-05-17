@@ -1259,14 +1259,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   
+  // Configure multer with more specific error handling
   const upload = multer({ 
     storage,
     fileFilter,
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-  });
+  }).single('file');
   
   // NUTTAB Excel file upload endpoint
-  app.post('/api/nuttab/upload', upload.single('file'), async (req: any, res) => {
+  app.post('/api/nuttab/upload', (req: any, res: any) => {
+    upload(req, res, async function(err) {
+      if (err) {
+        console.error('Multer error:', err);
+        return res.status(400).json({ error: err.message });
+      }
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
