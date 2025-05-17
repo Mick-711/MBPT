@@ -100,6 +100,12 @@ export default function MacroCalculatorPage() {
     gain: 'Gain weight (10% surplus)'
   };
   
+  const bodyCompositionDescriptions = {
+    average: 'Average body fat percentage',
+    lean: 'Lower body fat, visible muscle definition',
+    very_lean: 'Very low body fat, clearly visible muscle separation'
+  };
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(calculatorSchema),
     defaultValues: {
@@ -108,7 +114,8 @@ export default function MacroCalculatorPage() {
       age: 30,
       gender: 'male',
       activityLevel: 'moderate',
-      goal: 'maintain'
+      goal: 'maintain',
+      bodyComposition: 'average'
     }
   });
   
@@ -121,7 +128,8 @@ export default function MacroCalculatorPage() {
       data.age,
       data.gender,
       data.activityLevel,
-      data.goal
+      data.goal,
+      data.bodyComposition
     );
     
     // Set results
@@ -363,6 +371,40 @@ export default function MacroCalculatorPage() {
                               </FormItem>
                             )}
                           />
+                          
+                          <FormField
+                            control={form.control}
+                            name="bodyComposition"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  <div className="flex items-center">
+                                    <Dumbbell className="mr-2 h-4 w-4" />
+                                    Body Composition
+                                  </div>
+                                </FormLabel>
+                                <Select 
+                                  onValueChange={field.onChange} 
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select body composition" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="average">Average</SelectItem>
+                                    <SelectItem value="lean">Lean</SelectItem>
+                                    <SelectItem value="very_lean">Very Lean</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  {(bodyCompositionDescriptions as any)[field.value]}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       </div>
                       
@@ -446,6 +488,9 @@ export default function MacroCalculatorPage() {
                               <div className="text-2xl font-bold">{results.protein}g</div>
                               <div className="text-xs text-muted-foreground">
                                 {Math.round((results.protein * 4 / results.targetCalories) * 100)}% of calories
+                              </div>
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                {Math.round(results.protein / form.getValues().weight * 10) / 10}g/kg body weight
                               </div>
                             </CardContent>
                           </Card>
