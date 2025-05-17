@@ -17,9 +17,10 @@ interface SidebarItemProps {
   href: string;
   active?: boolean;
   badge?: number;
+  onClick?: () => void;
 }
 
-const SidebarItem = ({ icon, label, href, active, badge }: SidebarItemProps) => (
+const SidebarItem = ({ icon, label, href, active, badge, onClick }: SidebarItemProps) => (
   <li className="mb-1 px-3">
     <Link 
       href={href}

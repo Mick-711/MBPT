@@ -61,21 +61,75 @@ export default function NutritionPage() {
             Create and manage meal plans, track client nutrition, and monitor progress
           </p>
         </div>
+      </div>
+      
+      {/* Main action buttons section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Create New Items</CardTitle>
+          <CardDescription>Add new foods, meals, and nutrition templates to your database</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/food-database/new')}>
+              <ShoppingCart className="h-6 w-6 mb-2" />
+              <span>Add New Food</span>
+            </Button>
+            <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/meal-plans/new')}>
+              <Calendar className="h-6 w-6 mb-2" />
+              <span>Create Meal Plan</span>
+            </Button>
+            <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/calculator')}>
+              <Calculator className="h-6 w-6 mb-2" />
+              <span>Calculate Macros</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Library navigation section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
+              Food Library
+            </CardTitle>
+            <CardDescription>Browse and manage your food database</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col h-[150px]">
+            <p className="text-sm text-muted-foreground mb-4">
+              Access your complete food database with detailed nutritional information for meal planning.
+            </p>
+            <div className="mt-auto">
+              <Button className="w-full" onClick={() => navigate('/nutrition/food-database')}>
+                Open Food Library
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
-        <div className="flex gap-2 mt-4 md:mt-0">
-          <Button onClick={() => navigate('/nutrition/food-database')}>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Food Database
-          </Button>
-          <Button onClick={() => navigate('/nutrition/meal-plans')}>
-            <Calendar className="mr-2 h-4 w-4" />
-            Meal Plans
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/nutrition/calculator')}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Macro Calculator
-          </Button>
-        </div>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-primary" />
+              Meal Plan Library
+            </CardTitle>
+            <CardDescription>Access your meal plans and templates</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col h-[150px]">
+            <p className="text-sm text-muted-foreground mb-4">
+              View and manage your complete collection of meal plans, recipes, and templates.
+            </p>
+            <div className="mt-auto">
+              <Button className="w-full" onClick={() => navigate('/nutrition/meal-plans')}>
+                Open Meal Plans
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
