@@ -560,6 +560,89 @@ export default function NewMealPlan() {
                       <li>Customizations based on dietary needs</li>
                     </ul>
                   </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Customize Meal Plan:</h4>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="mealCount">Number of Meals</Label>
+                      <Select 
+                        defaultValue="3"
+                        onValueChange={(value) => {
+                          const selectedCount = parseInt(value);
+                          // Store the selected meal count in a variable or state to use later
+                          (window as any).selectedMealCount = selectedCount;
+                        }}
+                      >
+                        <SelectTrigger id="mealCount" className="w-full">
+                          <SelectValue placeholder="Choose meal count" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3 (Breakfast, Lunch, Dinner)</SelectItem>
+                          <SelectItem value="4">4 (Breakfast, Lunch, Dinner, Snack)</SelectItem>
+                          <SelectItem value="5">5 (Breakfast, Lunch, Dinner, 2 Snacks)</SelectItem>
+                          <SelectItem value="6">6 (Breakfast, Lunch, Dinner, 3 Snacks)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label>
+                          Breakfast Macros
+                          <span className="ml-1 text-xs text-muted-foreground">(25%)</span>
+                        </Label>
+                        <Input 
+                          type="number" 
+                          defaultValue="25"
+                          min="5"
+                          max="50"
+                          className="w-full"
+                          id="breakfast-percentage"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>
+                          Lunch Macros
+                          <span className="ml-1 text-xs text-muted-foreground">(40%)</span>
+                        </Label>
+                        <Input 
+                          type="number" 
+                          defaultValue="40"
+                          min="10"
+                          max="50"
+                          className="w-full"
+                          id="lunch-percentage"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>
+                          Dinner Macros
+                          <span className="ml-1 text-xs text-muted-foreground">(35%)</span>
+                        </Label>
+                        <Input 
+                          type="number" 
+                          defaultValue="35"
+                          min="10"
+                          max="50"
+                          className="w-full"
+                          id="dinner-percentage"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <div className="flex items-center">
+                        <Checkbox id="includeSnacks" defaultChecked />
+                        <Label htmlFor="includeSnacks" className="ml-2">
+                          Include snacks if needed to balance total macros
+                        </Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        The system will automatically calculate and create snacks to help balance your daily macro targets
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter className="flex space-x-2 sm:justify-end">
                   <DialogTrigger asChild>
@@ -574,21 +657,80 @@ export default function NewMealPlan() {
                       onClick={() => {
                         // Need to use setTimeout to allow dialog to close first before updating state
                         setTimeout(() => {
-                          // Create default meals
-                          const mealNames = ['Breakfast', 'Lunch', 'Dinner'];
-                          const times = ['08:00', '13:00', '19:00'];
+                          // Get meal count from UI
+                          const mealCountSelect = parseInt((window as any).selectedMealCount || "3");
                           
-                          // Calculate per-meal macros
-                          const breakfastRatio = 0.25;
-                          const lunchRatio = 0.4;
-                          const dinnerRatio = 0.35;
-                          const ratios = [breakfastRatio, lunchRatio, dinnerRatio];
+                          // Get meal distribution percentages from UI
+                          const breakfastPercentage = parseInt((document.getElementById('breakfast-percentage') as HTMLInputElement)?.value || "25");
+                          const lunchPercentage = parseInt((document.getElementById('lunch-percentage') as HTMLInputElement)?.value || "40");
+                          const dinnerPercentage = parseInt((document.getElementById('dinner-percentage') as HTMLInputElement)?.value || "35");
+                          
+                          // Validate percentages sum to 100 for the base 3 meals
+                          let baseSum = breakfastPercentage + lunchPercentage + dinnerPercentage;
+                          let adjustedBreakfastPct = breakfastPercentage;
+                          let adjustedLunchPct = lunchPercentage;
+                          let adjustedDinnerPct = dinnerPercentage;
+                          
+                          // Adjust if not 100%
+                          if (baseSum !== 100) {
+                            const adjustmentFactor = 100 / baseSum;
+                            adjustedBreakfastPct = Math.round(breakfastPercentage * adjustmentFactor);
+                            adjustedLunchPct = Math.round(lunchPercentage * adjustmentFactor);
+                            // Ensure the total is exactly 100%
+                            adjustedDinnerPct = 100 - adjustedBreakfastPct - adjustedLunchPct;
+                          }
+                          
+                          // Determine meal configuration based on count
+                          let mealNames = ['Breakfast', 'Lunch', 'Dinner'];
+                          let times = ['08:00', '13:00', '19:00'];
+                          let ratios = [
+                            adjustedBreakfastPct/100, 
+                            adjustedLunchPct/100, 
+                            adjustedDinnerPct/100
+                          ];
+                          
+                          // Add snacks if needed
+                          if (mealCountSelect > 3) {
+                            const snacksCount = mealCountSelect - 3;
+                            const includeSnacks = (document.getElementById('includeSnacks') as HTMLInputElement)?.checked ?? true;
+                            
+                            if (includeSnacks) {
+                              // Calculate percentage for snacks (evenly distributed)
+                              const snackPercentage = 15; // 15% per snack
+                              const totalSnackPercentage = snackPercentage * snacksCount;
+                              
+                              // Adjust main meal percentages
+                              const mainMealsAdjustment = (100 - totalSnackPercentage) / 100;
+                              ratios = ratios.map(r => r * mainMealsAdjustment);
+                              
+                              // Add snack ratios
+                              const snackRatio = snackPercentage / 100;
+                              
+                              // Add snacks to meals
+                              for (let i = 0; i < snacksCount; i++) {
+                                const snackNum = i + 1;
+                                mealNames.push(`Snack ${snacksCount > 1 ? snackNum : ''}`);
+                                
+                                // Set appropriate snack times
+                                if (snacksCount === 1) {
+                                  times.push('15:30'); // Mid-afternoon snack
+                                } else if (snacksCount === 2) {
+                                  times.push(i === 0 ? '10:30' : '15:30'); // Morning and afternoon
+                                } else if (snacksCount === 3) {
+                                  times.push(i === 0 ? '10:30' : (i === 1 ? '15:30' : '20:30')); // Morning, afternoon, evening
+                                }
+                                
+                                ratios.push(snackRatio);
+                              }
+                            }
+                          }
                           
                           const totalProtein = mealPlan.dailyProtein || 0;
                           const totalCarbs = mealPlan.dailyCarbs || 0;
                           const totalFat = mealPlan.dailyFat || 0;
                           const totalCalories = mealPlan.dailyCalories || 0;
                           
+                          // Create meals based on calculated distribution
                           const meals = mealNames.map((name, index) => {
                             const ratio = ratios[index];
                             return {
