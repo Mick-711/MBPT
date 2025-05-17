@@ -31,11 +31,45 @@ export default function NewMealPlan() {
     fat: 0
   });
   
-  // Check if we're loading from a template
+  // Check if we're loading from a template or from macro calculator
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const templateParam = urlParams.get('template');
     const templateIdParam = urlParams.get('templateId');
+    
+    // Check for macro parameters from calculator
+    const proteinParam = urlParams.get('protein');
+    const carbsParam = urlParams.get('carbs');
+    const fatParam = urlParams.get('fat');
+    
+    // If we have macro parameters, use them
+    if (proteinParam || carbsParam || fatParam) {
+      const protein = proteinParam ? parseInt(proteinParam) : 0;
+      const carbs = carbsParam ? parseInt(carbsParam) : 0;
+      const fat = fatParam ? parseInt(fatParam) : 0;
+      
+      // Calculate total calories
+      const calories = (protein * 4) + (carbs * 4) + (fat * 9);
+      
+      setMealPlan(prev => ({ 
+        ...prev,
+        name: 'Meal Plan Based on Calculated Macros',
+        description: `Protein: ${protein}g, Carbs: ${carbs}g, Fat: ${fat}g`,
+        protein,
+        carbs,
+        fat,
+        calories
+      }));
+      
+      // Fetch suggested foods based on macros
+      fetch(`/api/food/suggestions?protein=${protein}&carbs=${carbs}&fat=${fat}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Suggested foods:', data);
+          // You could use this data to pre-populate meals in the plan
+        })
+        .catch(err => console.error('Error fetching food suggestions:', err));
+    }
     
     if (templateParam === 'true') {
       setMealPlan(prev => ({ ...prev, isTemplate: true }));

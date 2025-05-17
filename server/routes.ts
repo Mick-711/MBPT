@@ -983,6 +983,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+  
+  // Food suggestions route for macro-based meal planning
+  app.get('/api/food/suggestions', async (req, res) => {
+    try {
+      const { protein, carbs, fat } = req.query;
+      
+      // Parse macro targets, defaulting to reasonable values if not provided
+      const proteinTarget = protein ? parseInt(protein as string) : 150;
+      const carbsTarget = carbs ? parseInt(carbs as string) : 200;
+      const fatTarget = fat ? parseInt(fat as string) : 60;
+      
+      // Sample foods data - in a real app, this would come from a database
+      const sampleFoods = [
+        {
+          id: 1,
+          name: "Chicken Breast",
+          category: "protein",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 165,
+          protein: 31,
+          carbs: 0,
+          fat: 3.6
+        },
+        {
+          id: 2,
+          name: "Salmon",
+          category: "protein",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 206,
+          protein: 22,
+          carbs: 0,
+          fat: 13
+        },
+        {
+          id: 3,
+          name: "Egg Whites",
+          category: "protein",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 52,
+          protein: 11,
+          carbs: 0.7,
+          fat: 0.2
+        },
+        {
+          id: 4,
+          name: "Brown Rice",
+          category: "carbs",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 112,
+          protein: 2.6,
+          carbs: 24,
+          fat: 0.9
+        },
+        {
+          id: 5,
+          name: "Sweet Potato",
+          category: "carbs",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 86,
+          protein: 1.6, 
+          carbs: 20,
+          fat: 0.1
+        },
+        {
+          id: 6,
+          name: "Oats",
+          category: "carbs",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 389,
+          protein: 16.9,
+          carbs: 66.3,
+          fat: 6.9
+        },
+        {
+          id: 7,
+          name: "Avocado",
+          category: "fat",
+          servingSize: 100,
+          servingUnit: "g",
+          calories: 160,
+          protein: 2,
+          carbs: 8.5,
+          fat: 14.7
+        },
+        {
+          id: 8,
+          name: "Olive Oil",
+          category: "fat",
+          servingSize: 15,
+          servingUnit: "ml",
+          calories: 119,
+          protein: 0,
+          carbs: 0,
+          fat: 13.5
+        },
+        {
+          id: 9,
+          name: "Almonds",
+          category: "fat",
+          servingSize: 28,
+          servingUnit: "g",
+          calories: 164,
+          protein: 6,
+          carbs: 6,
+          fat: 14
+        }
+      ];
+      
+      // Filter foods to find those that come closest to the target macros within ±10%
+      // For protein-rich foods
+      const proteinFoods = sampleFoods
+        .filter(food => food.category === "protein")
+        .slice(0, 3);
+        
+      // For carb-rich foods
+      const carbFoods = sampleFoods
+        .filter(food => food.category === "carbs")
+        .slice(0, 3);
+        
+      // For fat-rich foods
+      const fatFoods = sampleFoods
+        .filter(food => food.category === "fat")
+        .slice(0, 3);
+      
+      res.json({
+        protein: proteinFoods,
+        carbs: carbFoods,
+        fat: fatFoods
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);
