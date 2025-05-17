@@ -501,6 +501,73 @@ export default function NewMealPlan() {
         </h1>
       </div>
       
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Create Meal Plan</h2>
+        {mealPlan.dailyCalories > 0 && (
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveTab('details')}
+              className={activeTab === 'details' ? 'bg-primary/10' : ''}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Edit Details
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setActiveTab('foods')}
+              className={activeTab === 'foods' ? 'bg-primary/10' : ''}
+            >
+              <Pizza className="mr-2 h-4 w-4" />
+              Edit Foods
+            </Button>
+            <Button 
+              variant="default" 
+              className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
+              onClick={() => {
+                try {
+                  // Import needed only when button is clicked to avoid issues
+                  import('@/components/nutrition/AIMealPlanButton').then(({ AIMealPlanButton }) => {
+                    const AIButton = AIMealPlanButton;
+                    const button = document.createElement('div');
+                    button.id = 'ai-button-container';
+                    document.body.appendChild(button);
+                    
+                    // Create a temporary React root
+                    const root = document.getElementById('ai-button-container');
+                    if (root) {
+                      // Simulate click to open dialog
+                      const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                      });
+                      
+                      // Find the actual button element and click it
+                      const aiButtonEl = document.querySelector('[data-ai-button="true"]');
+                      if (aiButtonEl) {
+                        aiButtonEl.dispatchEvent(event);
+                      }
+                    }
+                  });
+                } catch (err) {
+                  console.error('Failed to load AI component:', err);
+                }
+              }}
+            >
+              <div data-ai-button="true" style={{ display: 'none' }}></div>
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 3V4M12 20V21M21 12H20M4 12H3M18.364 5.636L17.657 6.343M6.343 17.657L5.636 18.364M18.364 18.364L17.657 17.657M6.343 6.343L5.636 5.636M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Generate with AI
+              </span>
+            </Button>
+          </div>
+        )}
+      </div>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details">
