@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, Download, Check, X } from 'lucide-react';
+import axios from 'axios';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 
 import { FoodData } from '@/lib/nutritionHelpers';
-import { nuttabFoods, searchNuttabFoods, convertToFoodData, NuttabFoodData } from '@/data/nuttabFoods';
 
 export default function NuttabFoodImporter() {
   const [query, setQuery] = useState('');
