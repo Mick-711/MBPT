@@ -66,7 +66,8 @@ const calculatorSchema = z.object({
     .max(100, { message: 'Age must be less than 100 years.' }),
   gender: z.enum(['male', 'female']),
   activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
-  goal: z.enum(['maintain', 'lose', 'gain'])
+  goal: z.enum(['maintain', 'lose', 'gain']),
+  bodyComposition: z.enum(['average', 'lean', 'very_lean'])
 });
 
 type FormValues = z.infer<typeof calculatorSchema>;

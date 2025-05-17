@@ -448,7 +448,8 @@ export function calculateCalorieNeeds(
   age: number,
   gender: 'male' | 'female',
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active',
-  goal: 'maintain' | 'lose' | 'gain'
+  goal: 'maintain' | 'lose' | 'gain',
+  bodyComposition: 'average' | 'lean' | 'very_lean' = 'average' // Default to average if not provided
 ): {
   tdee: number; // Total Daily Energy Expenditure
   targetCalories: number;
@@ -483,12 +484,32 @@ export function calculateCalorieNeeds(
     targetCalories = Math.round(tdee * 1.1); // 10% surplus
   }
   
-  // Calculate macros
-  // Protein: 1.6-2.2g per kg of bodyweight
-  const protein = Math.round(weight * (goal === 'gain' ? 2 : 1.8));
+  // Calculate protein based on body composition and goal
+  // Protein recommendations increase for leaner individuals
+  let proteinFactor: number;
   
-  // Fat: 20-35% of calories
-  const fat = Math.round((targetCalories * 0.25) / 9); // 25% of calories, 9 calories per gram
+  if (bodyComposition === 'very_lean') {
+    // Higher protein needs for very lean individuals
+    proteinFactor = goal === 'gain' ? 2.4 : 2.2;
+  } else if (bodyComposition === 'lean') {
+    // Moderately high protein for lean individuals
+    proteinFactor = goal === 'gain' ? 2.2 : 2.0;
+  } else {
+    // Standard protein for average body composition
+    proteinFactor = goal === 'gain' ? 2.0 : 1.8;
+  }
+  
+  const protein = Math.round(weight * proteinFactor);
+  
+  // Fat: 20-35% of calories (adjusted slightly based on body composition)
+  // Leaner individuals might benefit from slightly higher fat intake for hormonal health
+  let fatPercent = 0.25; // default 25% of calories
+  
+  if (bodyComposition === 'very_lean' && goal === 'maintain') {
+    fatPercent = 0.28; // 28% for hormone support in very lean individuals
+  }
+  
+  const fat = Math.round((targetCalories * fatPercent) / 9); // 9 calories per gram
   
   // Remaining calories from carbs
   const proteinCalories = protein * 4; // 4 calories per gram
