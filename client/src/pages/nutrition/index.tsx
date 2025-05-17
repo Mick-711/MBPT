@@ -99,7 +99,22 @@ export default function NutritionPage() {
               </svg>
               <span>Add New Food</span>
             </Button>
-            <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/meal-plans/new')}>
+            <Button 
+              className="h-auto py-4 flex flex-col" 
+              onClick={() => {
+                // Use React 18's startTransition API to prevent suspension error
+                if (typeof window !== 'undefined' && 'React' in window && 'startTransition' in (window as any).React) {
+                  (window as any).React.startTransition(() => {
+                    navigate('/nutrition/meal-plans/new');
+                  });
+                } else {
+                  // Fallback for when React.startTransition is not available
+                  setTimeout(() => {
+                    navigate('/nutrition/meal-plans/new');
+                  }, 0);
+                }
+              }}
+            >
               <Calendar className="h-6 w-6 mb-2" />
               <span>Create Meal Plan</span>
             </Button>
