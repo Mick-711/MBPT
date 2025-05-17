@@ -6,6 +6,7 @@ import { insertUserSchema, insertClientProfileSchema, insertTrainerProfileSchema
   insertExerciseSchema, insertNutritionPlanSchema, insertMealSchema, 
   insertProgressRecordSchema, insertProgressPhotoSchema, insertMessageSchema, 
   insertTaskSchema } from "@shared/schema";
+import { generateMealRecommendations, generateFoodSuggestions } from "./ai/nutrition";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
