@@ -492,11 +492,11 @@ export default function NewMealPlan() {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate('/nutrition/meal-plans')}
+          onClick={() => navigate('/nutrition')}
           className="mr-2"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
+          Back to Nutrition Dashboard
         </Button>
         <h1 className="text-2xl font-bold">
           {mealPlan.isTemplate ? 'Create Meal Plan Template' : 'Create New Meal Plan'}
@@ -504,7 +504,7 @@ export default function NewMealPlan() {
       </div>
       
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Create Meal Plan</h2>
+        <h2 className="text-xl font-bold">Plan Details</h2>
         {(mealPlan.dailyCalories || 0) > 0 && (
           <div className="flex space-x-2">
             <Button 

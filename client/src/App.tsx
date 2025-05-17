@@ -187,15 +187,8 @@ function Router() {
       <Route path="/nutrition/food-database" component={FoodDatabase} />
       <Route path="/nutrition/food-database/new" component={AddFood} />
       <Route path="/nutrition/meal-plans" component={MealPlans} />
-      <Route path="/nutrition/meal-plans/new">
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        }>
-          {React.createElement(React.lazy(() => import('./pages/nutrition/meal-plans/new')))}
-        </Suspense>
-      </Route>
+      {/* Notice that we've removed the /nutrition/meal-plans/new route to direct users 
+          to use the AI meal plan generator within the nutrition dashboard instead */}
       <Route path="/nutrition/calculator" component={MacroCalculator} />
       
       <Route component={NotFound} />
