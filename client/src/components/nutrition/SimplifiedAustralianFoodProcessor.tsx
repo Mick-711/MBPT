@@ -186,6 +186,11 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
         mapping.carbs = index;
       }
       
+      // Fiber column
+      if (headerText.includes('dietary fibre') || headerText.includes('dietary fiber') || headerText.includes('fibre')) {
+        mapping.fiber = index;
+      }
+      
       // Sodium column
       if (headerText.includes('sodium')) {
         mapping.sodium = index;
@@ -240,6 +245,7 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
           if (mapping.protein === -1) missingColumns.push('Protein');
           if (mapping.fat === -1) missingColumns.push('Fat');
           if (mapping.carbs === -1) missingColumns.push('Carbohydrates');
+          if (mapping.fiber === -1) missingColumns.push('Fiber');
           if (mapping.sodium === -1) missingColumns.push('Sodium');
           
           if (missingColumns.length > 0) {
@@ -280,7 +286,7 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
                 protein: parseFloat(row[mapping.protein]) || 0,
                 carbs: parseFloat(row[mapping.carbs]) || 0,
                 fat: parseFloat(row[mapping.fat]) || 0,
-                fiber: 0, // Not including fiber
+                fiber: parseFloat(row[mapping.fiber]) || 0, // Include fiber data if available
                 sugar: 0, // Not including sugar
                 sodium: parseFloat(row[mapping.sodium]) || 0,
                 isPublic: true,
@@ -428,6 +434,7 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
                     <TableHead className={columnMapping.protein !== -1 ? 'bg-primary/10' : ''}>Protein (g)</TableHead>
                     <TableHead className={columnMapping.fat !== -1 ? 'bg-primary/10' : ''}>Fat (g)</TableHead>
                     <TableHead className={columnMapping.carbs !== -1 ? 'bg-primary/10' : ''}>Carbs (g)</TableHead>
+                    <TableHead className={columnMapping.fiber !== -1 ? 'bg-primary/10' : ''}>Fiber (g)</TableHead>
                     <TableHead className={columnMapping.sodium !== -1 ? 'bg-primary/10' : ''}>Sodium (mg)</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -452,6 +459,9 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         {columnMapping.carbs !== -1 ? row[columnMapping.carbs] : 'Not found'}
+                      </TableCell>
+                      <TableCell>
+                        {columnMapping.fiber !== -1 ? row[columnMapping.fiber] : 'Not found'}
                       </TableCell>
                       <TableCell>
                         {columnMapping.sodium !== -1 ? row[columnMapping.sodium] : 'Not found'}
