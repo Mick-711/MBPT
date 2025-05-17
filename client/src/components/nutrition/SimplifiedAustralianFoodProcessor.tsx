@@ -97,7 +97,7 @@ const SimplifiedAustralianFoodProcessor: React.FC = () => {
     sodium: null
   });
   
-  const CHUNK_SIZE = 50; // Process foods in smaller batches
+  const CHUNK_SIZE = 10; // Process foods in very small batches to avoid payload size limits
   
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
