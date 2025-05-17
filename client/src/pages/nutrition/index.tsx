@@ -173,7 +173,7 @@ export default function NutritionPage() {
                   <CardContent className="p-4 pt-0">
                     <div className="text-sm flex items-center gap-2 mb-2">
                       <List className="h-4 w-4 text-muted-foreground" />
-                      <span>{template.meals ? template.meals.length : 0} meals</span>
+                      <span>{template.days?.length || 0} day plan</span>
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button 
