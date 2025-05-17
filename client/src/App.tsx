@@ -26,6 +26,13 @@ import ExercisesLibrary from "@/pages/exercises/index";
 import NewExercise from "@/pages/exercises/new";
 import ImportExercises from "@/pages/exercises/import";
 
+// Nutrition pages
+import NutritionDashboard from "@/pages/nutrition/index";
+import FoodDatabase from "@/pages/nutrition/food-database/index";
+import AddFood from "@/pages/nutrition/food-database/new/index";
+import MealPlans from "@/pages/nutrition/meal-plans/index";
+import MacroCalculator from "@/pages/nutrition/calculator/index";
+
 // Mobile client pages
 import ClientDashboard from "./pages/mobile/client/dashboard";
 import ClientWorkouts from "./pages/mobile/client/workouts";
@@ -174,6 +181,13 @@ function Router() {
       <Route path="/exercises" component={ExercisesLibrary} />
       <Route path="/exercises/new" component={NewExercise} />
       <Route path="/exercises/import" component={ImportExercises} />
+      
+      {/* Nutrition routes */}
+      <Route path="/nutrition" component={NutritionDashboard} />
+      <Route path="/nutrition/food-database" component={FoodDatabase} />
+      <Route path="/nutrition/food-database/new" component={AddFood} />
+      <Route path="/nutrition/meal-plans" component={MealPlans} />
+      <Route path="/nutrition/calculator" component={MacroCalculator} />
       
       <Route component={NotFound} />
     </Switch>
