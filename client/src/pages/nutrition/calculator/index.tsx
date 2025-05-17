@@ -67,7 +67,8 @@ const calculatorSchema = z.object({
   gender: z.enum(['male', 'female']),
   activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
   goal: z.enum(['maintain', 'lose', 'gain']),
-  bodyComposition: z.enum(['average', 'lean', 'very_lean'])
+  bodyComposition: z.enum(['below_average', 'average', 'lean', 'very_lean']),
+  fatPercentage: z.enum(['20', '25', '30', '35'])
 });
 
 type FormValues = z.infer<typeof calculatorSchema>;
@@ -101,9 +102,10 @@ export default function MacroCalculatorPage() {
   };
   
   const bodyCompositionDescriptions = {
-    average: 'Average body fat percentage',
-    lean: 'Lower body fat, visible muscle definition',
-    very_lean: 'Very low body fat, clearly visible muscle separation'
+    below_average: 'Higher body fat percentage (1.7g protein/kg)',
+    average: 'Average body fat percentage (2.0g protein/kg)',
+    lean: 'Lower body fat, visible muscle definition (2.4g protein/kg)',
+    very_lean: 'Very low body fat, clearly visible muscle separation (2.8g protein/kg)'
   };
   
   const form = useForm<FormValues>({
@@ -115,7 +117,8 @@ export default function MacroCalculatorPage() {
       gender: 'male',
       activityLevel: 'moderate',
       goal: 'maintain',
-      bodyComposition: 'average'
+      bodyComposition: 'average',
+      fatPercentage: '25'
     }
   });
   
@@ -129,7 +132,8 @@ export default function MacroCalculatorPage() {
       data.gender,
       data.activityLevel,
       data.goal,
-      data.bodyComposition
+      data.bodyComposition,
+      data.fatPercentage
     );
     
     // Set results
@@ -393,6 +397,7 @@ export default function MacroCalculatorPage() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
+                                    <SelectItem value="below_average">Below Average</SelectItem>
                                     <SelectItem value="average">Average</SelectItem>
                                     <SelectItem value="lean">Lean</SelectItem>
                                     <SelectItem value="very_lean">Very Lean</SelectItem>
@@ -400,6 +405,41 @@ export default function MacroCalculatorPage() {
                                 </Select>
                                 <FormDescription>
                                   {(bodyCompositionDescriptions as any)[field.value]}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="fatPercentage"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  <div className="flex items-center">
+                                    <Target className="mr-2 h-4 w-4" />
+                                    Dietary Fat
+                                  </div>
+                                </FormLabel>
+                                <Select 
+                                  onValueChange={field.onChange} 
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select fat percentage" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="20">20% of Calories</SelectItem>
+                                    <SelectItem value="25">25% of Calories</SelectItem>
+                                    <SelectItem value="30">30% of Calories</SelectItem>
+                                    <SelectItem value="35">35% of Calories</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  Percentage of total calories from fat
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>

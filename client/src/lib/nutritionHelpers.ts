@@ -449,7 +449,8 @@ export function calculateCalorieNeeds(
   gender: 'male' | 'female',
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active',
   goal: 'maintain' | 'lose' | 'gain',
-  bodyComposition: 'average' | 'lean' | 'very_lean' = 'average' // Default to average if not provided
+  bodyComposition: 'below_average' | 'average' | 'lean' | 'very_lean' = 'average', // Default to average if not provided
+  fatPercentage: '20' | '25' | '30' | '35' = '25' // Default to 25% if not provided
 ): {
   tdee: number; // Total Daily Energy Expenditure
   targetCalories: number;
@@ -484,30 +485,28 @@ export function calculateCalorieNeeds(
     targetCalories = Math.round(tdee * 1.1); // 10% surplus
   }
   
-  // Calculate protein based on body composition and goal
-  // Protein recommendations increase for leaner individuals
+  // Calculate protein based on body composition and goal per client request
+  // Updated protein factors based on user specifications
   let proteinFactor: number;
   
   if (bodyComposition === 'very_lean') {
-    // Higher protein needs for very lean individuals
-    proteinFactor = goal === 'gain' ? 2.4 : 2.2;
+    // Higher protein needs for very lean individuals (2.8g/kg)
+    proteinFactor = goal === 'gain' ? 3.0 : 2.8;
   } else if (bodyComposition === 'lean') {
-    // Moderately high protein for lean individuals
+    // Moderately high protein for lean individuals (2.4g/kg)
+    proteinFactor = goal === 'gain' ? 2.6 : 2.4;
+  } else if (bodyComposition === 'average') {
+    // Standard protein for average body composition (2.0g/kg)
     proteinFactor = goal === 'gain' ? 2.2 : 2.0;
-  } else {
-    // Standard protein for average body composition
-    proteinFactor = goal === 'gain' ? 2.0 : 1.8;
+  } else { // below_average
+    // Lower protein for below average body composition (1.7g/kg)
+    proteinFactor = goal === 'gain' ? 1.9 : 1.7;
   }
   
   const protein = Math.round(weight * proteinFactor);
   
-  // Fat: 20-35% of calories (adjusted slightly based on body composition)
-  // Leaner individuals might benefit from slightly higher fat intake for hormonal health
-  let fatPercent = 0.25; // default 25% of calories
-  
-  if (bodyComposition === 'very_lean' && goal === 'maintain') {
-    fatPercent = 0.28; // 28% for hormone support in very lean individuals
-  }
+  // Fat: User-specified percentage of calories
+  const fatPercent = parseInt(fatPercentage) / 100;
   
   const fat = Math.round((targetCalories * fatPercent) / 9); // 9 calories per gram
   
