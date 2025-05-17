@@ -1,69 +1,104 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { foods, insertFoodSchema } from '@shared/schema';
-import { eq, like, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { foods } from '@shared/schema';
+import { eq, like } from 'drizzle-orm';
 
 const router = Router();
 
-// Get all foods (with optional filters)
-router.get('/', async (req: Request, res: Response) => {
+// Get all foods
+router.get('/', async (_req: Request, res: Response) => {
   try {
-    const { search, category } = req.query;
-    
-    let query = db.select().from(foods);
-    
-    if (search && typeof search === 'string') {
-      query = query.where(like(foods.name, `%${search}%`));
-    }
-    
-    if (category && typeof category === 'string') {
-      query = query.where(eq(foods.category, category));
-    }
-    
-    const allFoods = await query;
-    res.json(allFoods);
+    const allFoods = await db.select().from(foods).limit(100);
+    res.json({ foods: allFoods });
   } catch (error) {
     console.error('Error fetching foods:', error);
     res.status(500).json({ error: 'Failed to fetch foods' });
   }
 });
 
-// Get a single food by ID
+// Get food by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const [food] = await db.select().from(foods).where(eq(foods.id, parseInt(id)));
+    const food = await db.select().from(foods).where(eq(foods.id, parseInt(id)));
     
-    if (!food) {
+    if (food.length === 0) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json(food);
+    res.json({ food: food[0] });
   } catch (error) {
     console.error('Error fetching food:', error);
     res.status(500).json({ error: 'Failed to fetch food' });
   }
 });
 
+// Search foods by name or category
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const searchResults = await db
+      .select()
+      .from(foods)
+      .where(like(foods.name, `%${query}%`))
+      .limit(50);
+    
+    res.json({ foods: searchResults });
+  } catch (error) {
+    console.error('Error searching foods:', error);
+    res.status(500).json({ error: 'Failed to search foods' });
+  }
+});
+
 // Create a new food
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const result = insertFoodSchema.safeParse(req.body);
+    const {
+      name,
+      brand,
+      category,
+      servingSize,
+      servingUnit,
+      calories,
+      protein,
+      carbs,
+      fat,
+      fiber,
+      sugar,
+      sodium,
+      isPublic,
+      createdBy
+    } = req.body;
     
-    if (!result.success) {
-      return res.status(400).json({ error: 'Invalid food data', details: result.error.format() });
+    // Validate required fields
+    if (!name || !servingSize || !servingUnit || calories === undefined || 
+        protein === undefined || carbs === undefined || fat === undefined) {
+      return res.status(400).json({ error: 'Missing required food information' });
     }
     
-    const newFood = {
-      ...result.data,
-      createdBy: req.session?.userId || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const [newFood] = await db.insert(foods).values({
+      name,
+      brand,
+      category,
+      servingSize,
+      servingUnit,
+      calories,
+      protein,
+      carbs,
+      fat,
+      fiber,
+      sugar,
+      sodium,
+      isPublic,
+      createdBy
+    }).returning();
     
-    const [createdFood] = await db.insert(foods).values(newFood).returning();
-    res.status(201).json(createdFood);
+    res.status(201).json({ food: newFood });
   } catch (error) {
     console.error('Error creating food:', error);
     res.status(500).json({ error: 'Failed to create food' });
@@ -74,44 +109,19 @@ router.post('/', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const foodId = parseInt(id);
+    const updates = req.body;
     
-    // Check if food exists
-    const [existingFood] = await db.select().from(foods).where(eq(foods.id, foodId));
+    const [updatedFood] = await db
+      .update(foods)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(foods.id, parseInt(id)))
+      .returning();
     
-    if (!existingFood) {
+    if (!updatedFood) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    // Validate input data
-    const updateFoodSchema = z.object({
-      name: z.string().optional(),
-      category: z.string().optional(),
-      servingSize: z.number().positive().optional(),
-      servingUnit: z.string().optional(),
-      calories: z.number().nonnegative().optional(),
-      protein: z.number().nonnegative().optional(),
-      carbs: z.number().nonnegative().optional(),
-      fat: z.number().nonnegative().optional(),
-      fiber: z.number().nonnegative().optional(),
-      isPublic: z.boolean().optional()
-    });
-    
-    const result = updateFoodSchema.safeParse(req.body);
-    
-    if (!result.success) {
-      return res.status(400).json({ error: 'Invalid food data', details: result.error.format() });
-    }
-    
-    const [updatedFood] = await db.update(foods)
-      .set({
-        ...result.data,
-        updatedAt: new Date()
-      })
-      .where(eq(foods.id, foodId))
-      .returning();
-    
-    res.json(updatedFood);
+    res.json({ food: updatedFood });
   } catch (error) {
     console.error('Error updating food:', error);
     res.status(500).json({ error: 'Failed to update food' });
@@ -122,18 +132,8 @@ router.patch('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const foodId = parseInt(id);
-    
-    // Check if food exists
-    const [existingFood] = await db.select().from(foods).where(eq(foods.id, foodId));
-    
-    if (!existingFood) {
-      return res.status(404).json({ error: 'Food not found' });
-    }
-    
-    await db.delete(foods).where(eq(foods.id, foodId));
-    
-    res.status(204).send();
+    await db.delete(foods).where(eq(foods.id, parseInt(id)));
+    res.json({ message: 'Food deleted successfully' });
   } catch (error) {
     console.error('Error deleting food:', error);
     res.status(500).json({ error: 'Failed to delete food' });
@@ -143,33 +143,23 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // Get food suggestions by category
 router.get('/suggestions/by-category', async (req: Request, res: Response) => {
   try {
-    // Get popular foods by category
-    const proteinFoods = await db
+    const { category } = req.query;
+    
+    if (!category || typeof category !== 'string') {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+    
+    // Handle the category as a string that needs to be parsed as an enum value
+    const suggestions = await db
       .select()
       .from(foods)
-      .where(eq(foods.category, 'protein'))
-      .limit(5);
+      .where(eq(foods.category, category as any))
+      .limit(20);
     
-    const carbFoods = await db
-      .select()
-      .from(foods)
-      .where(eq(foods.category, 'carbs'))
-      .limit(5);
-    
-    const fatFoods = await db
-      .select()
-      .from(foods)
-      .where(eq(foods.category, 'fat'))
-      .limit(5);
-    
-    res.json({
-      protein: proteinFoods,
-      carbs: carbFoods,
-      fat: fatFoods
-    });
+    res.json({ foods: suggestions });
   } catch (error) {
-    console.error('Error getting food suggestions:', error);
-    res.status(500).json({ error: 'Failed to get food suggestions' });
+    console.error('Error fetching food suggestions:', error);
+    res.status(500).json({ error: 'Failed to fetch food suggestions' });
   }
 });
 
