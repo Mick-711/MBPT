@@ -872,6 +872,7 @@ export default function NewMealPlan() {
                     id="dailyCalories" 
                     name="dailyCalories" 
                     type="number"
+                    step="0.1"
                     value={mealPlan.dailyCalories} 
                     onChange={handleChange} 
                     placeholder="Daily calories" 
@@ -884,6 +885,7 @@ export default function NewMealPlan() {
                     id="dailyProtein" 
                     name="dailyProtein" 
                     type="number"
+                    step="0.1"
                     value={mealPlan.dailyProtein} 
                     onChange={handleChange} 
                     placeholder="Daily protein" 
@@ -896,6 +898,7 @@ export default function NewMealPlan() {
                     id="dailyCarbs" 
                     name="dailyCarbs" 
                     type="number"
+                    step="0.1"
                     value={mealPlan.dailyCarbs} 
                     onChange={handleChange} 
                     placeholder="Daily carbs" 
@@ -908,6 +911,7 @@ export default function NewMealPlan() {
                     id="dailyFat" 
                     name="dailyFat" 
                     type="number"
+                    step="0.1"
                     value={mealPlan.dailyFat} 
                     onChange={handleChange} 
                     placeholder="Daily fat" 
@@ -920,6 +924,7 @@ export default function NewMealPlan() {
                     id="dailyFiber" 
                     name="dailyFiber" 
                     type="number"
+                    step="0.1"
                     value={mealPlan.dailyFiber || 0} 
                     onChange={handleChange} 
                     placeholder="Daily fiber" 
