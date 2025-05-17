@@ -9,7 +9,6 @@ import {
   Plus,
   ChevronRight,
   Book,
-  ChevronDown,
   List,
   Users
 } from 'lucide-react';
@@ -19,7 +18,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 
 import { 
   initializeNutritionStorage, 
@@ -182,8 +180,7 @@ export default function NutritionPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {mealPlans
-              ?.filter((plan) => plan.isTemplate)
+            {mealPlans?.filter((plan) => plan.isTemplate)
               .slice(0, 3)
               .map((template) => (
                 <Card key={template.id} className="overflow-hidden border border-muted">
@@ -245,12 +242,16 @@ export default function NutritionPage() {
         </CardFooter>
       </Card>
       
-      <Tabs value={activeTab} onValueChange={(value) => {
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => {
           setActiveTab(value);
           if (value === 'mealPlans') navigateTo('meal-plans');
           if (value === 'foodDatabase') navigateTo('food-database');
           if (value === 'macroCalculator') navigateTo('calculator');
-        }} className="space-y-4">
+        }} 
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="mealPlans">Meal Plans</TabsTrigger>
@@ -410,6 +411,24 @@ export default function NutritionPage() {
                 </Button>
               </CardFooter>
             </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="mealPlans">
+          <div className="flex justify-center items-center p-12">
+            <p className="text-muted-foreground">Redirecting to Meal Plans...</p>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="foodDatabase">
+          <div className="flex justify-center items-center p-12">
+            <p className="text-muted-foreground">Redirecting to Food Database...</p>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="macroCalculator">
+          <div className="flex justify-center items-center p-12">
+            <p className="text-muted-foreground">Redirecting to Macro Calculator...</p>
           </div>
         </TabsContent>
       </Tabs>
