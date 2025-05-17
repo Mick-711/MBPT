@@ -101,10 +101,11 @@ export default function NutritionPage() {
                 strokeLinejoin="round" 
                 className="h-6 w-6 mb-2"
               >
-                <path d="M15 11v.01M11 15h.01M14 22l5-5-2.5-2.5L14 17l-2.5-2.5L9 17l-2.5-2.5L4 17l5 5" />
-                <path d="M5 7v6l5 5" />
-                <path d="M19 7v6l-5 5" />
-                <path d="M9 3h6l3 4H6l3-4Z" />
+                <path d="M13.69 4.198C14.29 3.598 15.11 3.248 16 3.248C18.76 3.248 21 5.488 21 8.248C21 12.848 16 15.748 16 15.748" />
+                <path d="M8 14C8 14 3 11.1 3 6.5C3 3.6 5.2 1.2 8 1.2C10.8 1.2 13 3.6 13 6.5C13 11.1 8 14 8 14Z" />
+                <path d="M12.5 17C12.5 17 12 18 10 18C8 18 7.5 17 7.5 17" />
+                <path d="M15 20H9C9 18 10.8 17 12 17C13.2 17 15 18 15 20Z" />
+                <path d="M15 20H9" />
               </svg>
               <span>Add New Food</span>
             </Button>
