@@ -97,6 +97,25 @@
   }
 }
 
+/* Adjust card padding to reduce vertical space */
+@layer components {
+  .card {
+    @apply mb-4; /* Reduce margin between cards */
+  }
+  
+  .card-header {
+    @apply py-3; /* Reduce vertical padding in card headers */
+  }
+  
+  .card-content {
+    @apply py-3; /* Reduce vertical padding in card content */
+  }
+  
+  .card-footer {
+    @apply py-3; /* Reduce vertical padding in card footers */
+  }
+}
+
 /* Utility classes */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

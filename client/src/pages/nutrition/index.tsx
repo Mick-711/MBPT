@@ -81,12 +81,12 @@ export default function NutritionPage() {
       </div>
       
       {/* Main action buttons section */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-5 card">
+        <CardHeader className="card-header">
           <CardTitle>Create New Items</CardTitle>
           <CardDescription>Add new foods, meals, and nutrition templates to your database</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="card-content">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/food-database/new')}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 mb-2">
@@ -127,16 +127,16 @@ export default function NutritionPage() {
       </Card>
       
       {/* Library navigation section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card className="h-full">
-          <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+        <Card className="h-full card">
+          <CardHeader className="card-header">
             <CardTitle className="flex items-center">
               <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
               Food Library
             </CardTitle>
             <CardDescription>Browse and manage your food database</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col h-[150px]">
+          <CardContent className="flex flex-col h-[140px] card-content">
             <p className="text-sm text-muted-foreground mb-4">
               Access your complete food database with detailed nutritional information for meal planning.
             </p>
@@ -149,15 +149,15 @@ export default function NutritionPage() {
           </CardContent>
         </Card>
         
-        <Card className="h-full">
-          <CardHeader>
+        <Card className="h-full card">
+          <CardHeader className="card-header">
             <CardTitle className="flex items-center">
               <Calendar className="h-5 w-5 mr-2 text-primary" />
               Meal Plan Library
             </CardTitle>
             <CardDescription>Access your meal plans and templates</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col h-[150px]">
+          <CardContent className="flex flex-col h-[140px] card-content">
             <p className="text-sm text-muted-foreground mb-4">
               View and manage your complete collection of meal plans, recipes, and templates.
             </p>
@@ -172,15 +172,15 @@ export default function NutritionPage() {
       </div>
       
       {/* Templates section */}
-      <Card className="mb-6">
-        <CardHeader>
+      <Card className="mb-5 card">
+        <CardHeader className="card-header">
           <CardTitle className="flex items-center">
             <Book className="h-5 w-5 mr-2 text-primary" />
             Nutrition Templates
           </CardTitle>
           <CardDescription>Quick access to your saved meal plan templates</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="card-content">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {mealPlans?.filter((plan) => plan.isTemplate)
               .slice(0, 3)
@@ -232,7 +232,7 @@ export default function NutritionPage() {
             )}
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="card-footer">
           <Button 
             variant="ghost" 
             className="w-full flex items-center justify-center"
