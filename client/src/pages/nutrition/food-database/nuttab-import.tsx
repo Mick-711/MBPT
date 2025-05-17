@@ -46,7 +46,7 @@ export default function NuttabImportPage() {
         </TabsContent>
         
         <TabsContent value="excel" className="mt-0">
-          <SimpleNuttabUploader />
+          <NuttabExcelProcessor />
         </TabsContent>
       </Tabs>
       
