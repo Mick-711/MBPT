@@ -1,56 +1,144 @@
 import { Router, Request, Response } from 'express';
-import OpenAI from 'openai';
+import { db } from '../db';
+import { foods, insertFoodSchema } from '@shared/schema';
+import { sql } from 'drizzle-orm';
 
 const router = Router();
 
-// The newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// Route to search for foods in NUTTAB database
+// This is our simplified NUTTAB database API endpoint
 router.post('/search', async (req: Request, res: Response) => {
   try {
-    const { query, count } = req.body;
+    const { query } = req.body;
     
-    if (!query) {
-      return res.status(400).json({ error: 'Query is required' });
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
     }
     
-    const searchCount = count || 10;
+    // Mock NUTTAB food data for demonstration
+    const mockNuttabFoods = [
+      {
+        id: 1001,
+        name: "Beef, ground, lean",
+        category: "protein",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 250,
+        protein: 26.1,
+        carbs: 0,
+        fat: 17.2,
+        fiber: 0
+      },
+      {
+        id: 1002,
+        name: "Chicken breast, skinless",
+        category: "protein",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 165,
+        protein: 31,
+        carbs: 0,
+        fat: 3.6,
+        fiber: 0
+      },
+      {
+        id: 1003,
+        name: "Salmon, Atlantic, raw",
+        category: "protein",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 206,
+        protein: 22.1,
+        carbs: 0,
+        fat: 13.4,
+        fiber: 0
+      },
+      {
+        id: 2001,
+        name: "Rice, brown, cooked",
+        category: "carbs",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 112,
+        protein: 2.6,
+        carbs: 24,
+        fat: 0.9,
+        fiber: 1.8
+      },
+      {
+        id: 2002,
+        name: "Sweet potato, baked",
+        category: "carbs",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 90,
+        protein: 2,
+        carbs: 20.7,
+        fat: 0.2,
+        fiber: 3.3
+      },
+      {
+        id: 3001,
+        name: "Broccoli, raw",
+        category: "vegetable",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 34,
+        protein: 2.8,
+        carbs: 6.6,
+        fat: 0.4,
+        fiber: 2.6
+      },
+      {
+        id: 4001,
+        name: "Apple, with skin",
+        category: "fruit",
+        servingSize: 100,
+        servingUnit: "g",
+        calories: 52,
+        protein: 0.3,
+        carbs: 13.8,
+        fat: 0.2,
+        fiber: 2.4
+      },
+      {
+        id: 6001,
+        name: "Almonds, raw",
+        category: "nuts",
+        servingSize: 28,
+        servingUnit: "g",
+        calories: 164,
+        protein: 6,
+        carbs: 6,
+        fat: 14,
+        fiber: 3.5
+      }
+    ];
     
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: 
-            "You are a nutrition database API that provides accurate data from the NUTTAB (Australian Food Composition Database). " +
-            "When asked for food nutritional data, provide real, accurate values for standard serving sizes. " +
-            "Include calories, protein, carbs, fat, and fiber where available. " +
-            "Format data as JSON objects matching the schema requested. " +
-            "Always use realistic values, and provide a diverse range of foods that match the query criteria."
-        },
-        {
-          role: "user",
-          content: 
-            `Provide ${searchCount} food items from NUTTAB that match the query: "${query}". ` +
-            "Return only a valid JSON array of food objects with the following properties: " +
-            "name (string), category (string), servingSize (number), servingUnit (string), " +
-            "calories (number), protein (number), carbs (number), fat (number), fiber (number). " +
-            "Don't include any explanation or text, just the JSON array."
-        }
-      ],
-      response_format: { type: "json_object" }
-    });
+    // Filter foods based on search query
+    const lowercaseQuery = query.toLowerCase();
+    const searchResults = mockNuttabFoods.filter(food => 
+      food.name.toLowerCase().includes(lowercaseQuery) || 
+      food.category.toLowerCase().includes(lowercaseQuery)
+    );
+    
+    res.json({ foods: searchResults });
+  } catch (error) {
+    console.error('Error searching NUTTAB database:', error);
+    res.status(500).json({ error: 'Failed to search NUTTAB database' });
+  }
+});
 
-    const result = JSON.parse(response.choices[0].message.content);
+// Import NUTTAB foods into our database
+router.post('/import', async (req: Request, res: Response) => {
+  try {
+    const { foods: foodsToImport } = req.body;
     
-    if (!result.foods || !Array.isArray(result.foods)) {
-      return res.status(500).json({ error: "Invalid response format from OpenAI" });
+    if (!Array.isArray(foodsToImport) || foodsToImport.length === 0) {
+      return res.status(400).json({ error: 'Invalid food data. Expected array of foods.' });
     }
 
-    // Process and validate the foods
-    const processedFoods = result.foods.map((food: any, index: number) => ({
-      id: Date.now() + index, // Temporary ID that will be replaced when saved to database
+    // Transform to match our database schema
+    const transformedFoods = foodsToImport.map(food => ({
       name: food.name,
       category: food.category,
       servingSize: food.servingSize,
@@ -59,16 +147,23 @@ router.post('/search', async (req: Request, res: Response) => {
       protein: food.protein,
       carbs: food.carbs,
       fat: food.fat,
-      fiber: food.fiber || 0
+      fiber: food.fiber || 0,
+      isPublic: true,
+      createdBy: req.session?.userId || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }));
-
-    return res.json({ foods: processedFoods });
-  } catch (error: any) {
-    console.error("Error searching NUTTAB:", error);
-    return res.status(500).json({ 
-      error: "Failed to search NUTTAB database",
-      message: error.message
+    
+    // Insert foods into database
+    const newFoods = await db.insert(foods).values(transformedFoods).returning();
+    
+    res.status(201).json({ 
+      message: `Successfully imported ${newFoods.length} foods`, 
+      foods: newFoods 
     });
+  } catch (error) {
+    console.error('Error importing NUTTAB foods:', error);
+    res.status(500).json({ error: 'Failed to import foods to database' });
   }
 });
 
