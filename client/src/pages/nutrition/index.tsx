@@ -49,6 +49,24 @@ export default function NutritionPage() {
     queryFn: () => getFoodsFromStorage()
   });
   
+  // Handle navigation between sections
+  const navigateTo = (section: string) => {
+    switch(section) {
+      case 'food-database':
+        navigate('/nutrition/food-database');
+        break;
+      case 'meal-plans':
+        navigate('/nutrition/meal-plans');
+        break;
+      case 'calculator':
+        navigate('/nutrition/calculator');
+        break;
+      default:
+        // Stay on current page
+        break;
+    }
+  };
+  
   // Sample data for recently used foods
   const recentlyUsedFoods = foods?.slice(0, 5) || [];
   
@@ -206,7 +224,12 @@ export default function NutritionPage() {
         </CardFooter>
       </Card>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          if (value === 'mealPlans') navigateTo('meal-plans');
+          if (value === 'foodDatabase') navigateTo('food-database');
+          if (value === 'macroCalculator') navigateTo('calculator');
+        }} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="mealPlans">Meal Plans</TabsTrigger>
