@@ -503,7 +503,7 @@ export default function NewMealPlan() {
       
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Create Meal Plan</h2>
-        {mealPlan.dailyCalories > 0 && (
+        {(mealPlan.dailyCalories || 0) > 0 && (
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
@@ -521,49 +521,99 @@ export default function NewMealPlan() {
               <Pizza className="mr-2 h-4 w-4" />
               Edit Foods
             </Button>
-            <Button 
-              variant="default" 
-              className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
-              onClick={() => {
-                try {
-                  // Import needed only when button is clicked to avoid issues
-                  import('@/components/nutrition/AIMealPlanButton').then(({ AIMealPlanButton }) => {
-                    const AIButton = AIMealPlanButton;
-                    const button = document.createElement('div');
-                    button.id = 'ai-button-container';
-                    document.body.appendChild(button);
-                    
-                    // Create a temporary React root
-                    const root = document.getElementById('ai-button-container');
-                    if (root) {
-                      // Simulate click to open dialog
-                      const event = new MouseEvent('click', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="default" 
+                  className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
+                >
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3V4M12 20V21M21 12H20M4 12H3M18.364 5.636L17.657 6.343M6.343 17.657L5.636 18.364M18.364 18.364L17.657 17.657M6.343 6.343L5.636 5.636M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" 
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Generate with AI
+                  </span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-purple-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3V4M12 20V21M21 12H20M4 12H3M18.364 5.636L17.657 6.343M6.343 17.657L5.636 18.364M18.364 18.364L17.657 17.657M6.343 6.343L5.636 5.636M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" 
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    AI Meal Plan Generation
+                  </DialogTitle>
+                  <DialogDescription>
+                    Create an AI-powered meal plan based on your macro targets
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <p>Using AI technology, we can generate personalized meal plans optimized for your macro targets.</p>
+                  <div className="bg-muted p-3 rounded-md">
+                    <h4 className="font-medium mb-1">AI-powered meal plans include:</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>Balanced breakfast, lunch, dinner and snacks</li>
+                      <li>Precise macro distribution across meals</li>
+                      <li>Food suggestions from your database</li>
+                      <li>Customizations based on dietary needs</li>
+                    </ul>
+                  </div>
+                </div>
+                <DialogFooter className="flex space-x-2 sm:justify-end">
+                  <Button variant="outline" type="button">
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
+                    onClick={() => {
+                      // Create default meals
+                      const mealNames = ['Breakfast', 'Lunch', 'Dinner'];
+                      const times = ['08:00', '13:00', '19:00'];
+                      
+                      // Calculate per-meal macros
+                      const breakfastRatio = 0.25;
+                      const lunchRatio = 0.4;
+                      const dinnerRatio = 0.35;
+                      const ratios = [breakfastRatio, lunchRatio, dinnerRatio];
+                      
+                      const totalProtein = mealPlan.dailyProtein || 0;
+                      const totalCarbs = mealPlan.dailyCarbs || 0;
+                      const totalFat = mealPlan.dailyFat || 0;
+                      const totalCalories = mealPlan.dailyCalories || 0;
+                      
+                      const meals = mealNames.map((name, index) => {
+                        const ratio = ratios[index];
+                        return {
+                          id: Date.now() + index,
+                          name,
+                          description: `AI-generated ${name.toLowerCase()} suggestion`,
+                          time: times[index],
+                          foods: [],
+                          totalCalories: Math.round(totalCalories * ratio),
+                          totalProtein: Math.round(totalProtein * ratio),
+                          totalCarbs: Math.round(totalCarbs * ratio),
+                          totalFat: Math.round(totalFat * ratio)
+                        };
                       });
                       
-                      // Find the actual button element and click it
-                      const aiButtonEl = document.querySelector('[data-ai-button="true"]');
-                      if (aiButtonEl) {
-                        aiButtonEl.dispatchEvent(event);
-                      }
-                    }
-                  });
-                } catch (err) {
-                  console.error('Failed to load AI component:', err);
-                }
-              }}
-            >
-              <div data-ai-button="true" style={{ display: 'none' }}></div>
-              <span className="flex items-center">
-                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 3V4M12 20V21M21 12H20M4 12H3M18.364 5.636L17.657 6.343M6.343 17.657L5.636 18.364M18.364 18.364L17.657 17.657M6.343 6.343L5.636 5.636M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" 
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Generate with AI
-              </span>
-            </Button>
+                      // Update meal plan with the new meals
+                      setMealPlan(prev => ({
+                        ...prev,
+                        days: [{ dayNumber: 1, meals: meals }]
+                      }));
+                      
+                      // Navigate to the foods tab
+                      setActiveTab('foods');
+                    }}
+                  >
+                    Generate Plan
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </div>

@@ -67,13 +67,13 @@ export default function MealPlansPage() {
   }, []);
   
   // Fetch meal plans
-  const { data: mealPlans, isLoading, refetch } = useQuery({
+  const { data: mealPlans = [], isLoading, refetch } = useQuery({
     queryKey: ['mealPlans'],
-    queryFn: () => getMealPlansFromStorage()
+    queryFn: () => getMealPlansFromStorage() || []
   });
   
   // Filter meal plans based on search term and filter type
-  const filteredPlans = mealPlans?.filter(plan => {
+  const filteredPlans = mealPlans.filter(plan => {
     const matchesSearch = 
       searchTerm === '' || 
       plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
