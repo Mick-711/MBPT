@@ -2,7 +2,16 @@ import OpenAI from "openai";
 import { FoodData } from "./nutritionHelpers";
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. Do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: import.meta.env.VITE_OPENAI_API_KEY });
+const getOpenAIInstance = () => {
+  // Check if we're in the frontend or backend
+  if (typeof window !== 'undefined') {
+    // Frontend - fetch from server endpoint since we can't expose API keys directly
+    return null; // We'll use a different approach for the frontend
+  } else {
+    // Backend - use environment variable directly (this won't actually run in our frontend-only code)
+    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+};
 
 /**
  * Fetches nutritional data from NUTTAB via OpenAI API
