@@ -51,16 +51,55 @@ export default function NuttabExcelProcessor() {
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
-          // Convert to JSON with header
-          const rowObjects = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          // Convert to array of arrays first to find the header row
+          const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          console.log("First few rows:", rawRows.slice(0, 5));
           
-          // Extract header row (first row)
-          if (rowObjects.length < 2) {
-            throw new Error("Excel file must have at least a header row and one data row");
+          if (rawRows.length < 5) {
+            throw new Error("Excel file must have sufficient data rows");
           }
           
-          const headers = rowObjects[0] as string[];
-          console.log("Excel headers:", headers);
+          // Find the actual header row - often a few rows down in NUTTAB files
+          // Look for rows that might contain column headers
+          let headerRowIndex = -1;
+          for (let i = 0; i < Math.min(20, rawRows.length); i++) {
+            const row = rawRows[i] as any[];
+            if (!row || row.length === 0) continue;
+            
+            // Check if this row has strings that look like headers
+            const headerCandidates = [
+              "food", "name", "energy", "protein", "carbohydrate", "fat", 
+              "fibre", "sugar", "sodium", "cholesterol", "calcium"
+            ];
+            
+            let headerMatches = 0;
+            for (const cell of row) {
+              if (!cell) continue;
+              const cellStr = cell.toString().toLowerCase();
+              for (const candidate of headerCandidates) {
+                if (cellStr.includes(candidate)) {
+                  headerMatches++;
+                  break;
+                }
+              }
+            }
+            
+            // If we found multiple header matches, this is likely the header row
+            if (headerMatches >= 3) {
+              headerRowIndex = i;
+              break;
+            }
+          }
+          
+          // If we couldn't find a header row, try to use row 5 (common in many NUTTAB files)
+          if (headerRowIndex === -1) {
+            // Try row 5 as a fallback (0-indexed, so 4)
+            headerRowIndex = 4;
+            console.log("Couldn't detect header row, using row 5 as fallback");
+          }
+          
+          const headers = rawRows[headerRowIndex] as string[];
+          console.log("Using row", headerRowIndex + 1, "as headers:", headers);
           
           // Find columns for key nutritional data
           const nameIndex = findColumnIndex(headers, ['food name', 'name', 'food description', 'food']);
@@ -81,11 +120,14 @@ export default function NuttabExcelProcessor() {
             throw new Error("Could not find any nutritional data columns");
           }
           
-          // Process data rows
+          // Process data rows - start from the row after headers
           const processedFoods = [];
-          for (let i = 1; i < rowObjects.length; i++) {
-            const row = rowObjects[i] as any[];
-            if (!row || row.length === 0 || !row[nameIndex]) continue; // Skip empty rows
+          for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
+            const row = rawRows[i] as any[];
+            if (!row || row.length === 0) continue; // Skip empty rows
+            
+            // Skip rows without a name if we found a name column
+            if (nameIndex !== -1 && !row[nameIndex]) continue;
             
             // Extract name
             const name = row[nameIndex]?.toString() || 'Unnamed Food';

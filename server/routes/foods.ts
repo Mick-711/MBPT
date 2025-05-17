@@ -1,64 +1,45 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
+import { storage } from '../storage';
+import { foods, insertFoodSchema } from '@shared/schema';
 import { db } from '../db';
-import { foods, insertFoodSchema, type InsertFood } from '@shared/schema';
-import { eq, like, desc } from 'drizzle-orm';
 
 const router = Router();
 
 // Get all foods
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req, res) => {
   try {
-    const { category, search, limit = '50' } = req.query;
+    const { category, query, public: isPublic } = req.query;
+    const userId = req.session.userId;
     
-    let query = db.select().from(foods);
+    let foodsList = await storage.getFoods({ 
+      category: category as string, 
+      query: query as string,
+      isPublic: isPublic === 'true',
+      userId
+    });
     
-    // Filter by category if provided
-    if (category) {
-      query = query.where(eq(foods.category, category as string));
-    }
-    
-    // Filter by search term if provided
-    if (search) {
-      query = query.where(like(foods.name, `%${search}%`));
-    }
-    
-    // Order by recently added
-    query = query.orderBy(desc(foods.createdAt));
-    
-    // Apply limit if provided
-    if (limit) {
-      const limitNum = parseInt(limit as string, 10);
-      if (!isNaN(limitNum)) {
-        query = query.limit(limitNum);
-      }
-    }
-    
-    const results = await query;
-    
-    res.json({ foods: results });
+    res.json(foodsList);
   } catch (error) {
     console.error('Error getting foods:', error);
     res.status(500).json({ error: 'Failed to get foods' });
   }
 });
 
-// Get food by id
-router.get('/:id', async (req: Request, res: Response) => {
+// Get a specific food
+router.get('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid food ID' });
     }
     
-    const [food] = await db.select().from(foods).where(eq(foods.id, id));
-    
+    const food = await storage.getFood(id);
     if (!food) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json({ food });
+    res.json(food);
   } catch (error) {
     console.error('Error getting food:', error);
     res.status(500).json({ error: 'Failed to get food' });
@@ -66,136 +47,101 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Create a new food
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req, res) => {
   try {
-    const foodData = req.body;
-    
-    // Get user ID from session if available
-    const userId = req.session?.userId;
-    
-    // Validate the food data
-    const validatedFood = insertFoodSchema.parse({
-      ...foodData,
-      createdBy: userId || null
+    const foodData = insertFoodSchema.parse({
+      ...req.body,
+      createdBy: req.session.userId || null
     });
     
-    // Insert the food into the database
-    const [newFood] = await db.insert(foods).values(validatedFood).returning();
-    
-    res.status(201).json({ food: newFood });
+    const food = await storage.createFood(foodData);
+    res.status(201).json(food);
   } catch (error) {
-    console.error('Error creating food:', error);
-    
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    
+    console.error('Error creating food:', error);
     res.status(500).json({ error: 'Failed to create food' });
   }
 });
 
-// Batch create foods (for NUTTAB import)
-router.post('/batch', async (req: Request, res: Response) => {
+// Batch create foods
+router.post('/batch', async (req, res) => {
   try {
-    const { foods: foodsList } = req.body;
+    const { foods: foodsData } = req.body;
     
-    if (!Array.isArray(foodsList) || foodsList.length === 0) {
-      return res.status(400).json({ error: 'Invalid foods data. Expected an array of foods.' });
+    if (!Array.isArray(foodsData) || foodsData.length === 0) {
+      return res.status(400).json({ error: 'Invalid foods data format. Expected array of foods.' });
     }
     
-    console.log(`Processing batch import of ${foodsList.length} foods`);
-    
-    // Get user ID from session if available
-    const userId = req.session?.userId;
-    
-    // Prepare the foods data with createdBy field
-    const foodsData = foodsList.map(food => ({
+    // Add createdBy to each food
+    const foodsWithUser = foodsData.map(food => ({
       ...food,
-      createdBy: userId || null
+      createdBy: req.session.userId || null
     }));
     
-    // Insert the foods in batches to avoid potential issues with very large imports
-    const batchSize = 100;
-    const results = [];
-    
-    for (let i = 0; i < foodsData.length; i += batchSize) {
-      const batch = foodsData.slice(i, i + batchSize);
-      const batchResults = await db.insert(foods).values(batch).returning();
-      results.push(...batchResults);
-      console.log(`Imported batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(foodsData.length / batchSize)}`);
-    }
+    const insertedFoods = await storage.createFoodsBatch(foodsWithUser);
     
     res.status(201).json({ 
-      success: true,
-      message: `Successfully imported ${results.length} foods`,
-      totalProcessed: results.length,
-      foods: results.slice(0, 10) // Return just the first 10 to keep response size manageable
+      success: true, 
+      count: insertedFoods.length,
+      message: `Successfully imported ${insertedFoods.length} foods`
     });
   } catch (error) {
     console.error('Error batch creating foods:', error);
-    
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
-    
     res.status(500).json({ error: 'Failed to batch create foods' });
   }
 });
 
-// Update food
-router.patch('/:id', async (req: Request, res: Response) => {
+// Update a food
+router.patch('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid food ID' });
     }
     
-    const foodData = req.body;
-    
-    // Update the food in the database
-    const [updatedFood] = await db.update(foods)
-      .set({
-        ...foodData,
-        updatedAt: new Date()
-      })
-      .where(eq(foods.id, id))
-      .returning();
-    
-    if (!updatedFood) {
+    // Get the food to check ownership
+    const existingFood = await storage.getFood(id);
+    if (!existingFood) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json({ food: updatedFood });
-  } catch (error) {
-    console.error('Error updating food:', error);
-    
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+    // Only allow updates if the food is owned by the user or admin
+    if (existingFood.createdBy && existingFood.createdBy !== req.session.userId) {
+      return res.status(403).json({ error: 'You do not have permission to update this food' });
     }
     
+    const foodData = req.body;
+    const food = await storage.updateFood(id, foodData);
+    res.json(food);
+  } catch (error) {
+    console.error('Error updating food:', error);
     res.status(500).json({ error: 'Failed to update food' });
   }
 });
 
-// Delete food
-router.delete('/:id', async (req: Request, res: Response) => {
+// Delete a food
+router.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid food ID' });
     }
     
-    const [deletedFood] = await db.delete(foods)
-      .where(eq(foods.id, id))
-      .returning();
-    
-    if (!deletedFood) {
+    // Get the food to check ownership
+    const existingFood = await storage.getFood(id);
+    if (!existingFood) {
       return res.status(404).json({ error: 'Food not found' });
     }
     
-    res.json({ message: 'Food deleted successfully', food: deletedFood });
+    // Only allow deletion if the food is owned by the user or admin
+    if (existingFood.createdBy && existingFood.createdBy !== req.session.userId) {
+      return res.status(403).json({ error: 'You do not have permission to delete this food' });
+    }
+    
+    await storage.deleteFood(id);
+    res.json({ success: true });
   } catch (error) {
     console.error('Error deleting food:', error);
     res.status(500).json({ error: 'Failed to delete food' });
