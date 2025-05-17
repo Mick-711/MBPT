@@ -87,7 +87,7 @@ export default function NutritionPage() {
           <CardDescription>Add new foods, meals, and nutrition templates to your database</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/food-database/new')}>
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -101,11 +101,12 @@ export default function NutritionPage() {
                 strokeLinejoin="round" 
                 className="h-6 w-6 mb-2"
               >
-                <path d="M13.69 4.198C14.29 3.598 15.11 3.248 16 3.248C18.76 3.248 21 5.488 21 8.248C21 12.848 16 15.748 16 15.748" />
-                <path d="M8 14C8 14 3 11.1 3 6.5C3 3.6 5.2 1.2 8 1.2C10.8 1.2 13 3.6 13 6.5C13 11.1 8 14 8 14Z" />
-                <path d="M12.5 17C12.5 17 12 18 10 18C8 18 7.5 17 7.5 17" />
-                <path d="M15 20H9C9 18 10.8 17 12 17C13.2 17 15 18 15 20Z" />
-                <path d="M15 20H9" />
+                <path d="M6 11.5c0 1 .6 3 2 3s2-2 2-3c0-.7-.4-1.6-1-2l-2-1c-.6-.4-1-1.3-1-2 0-1 .6-3 2-3s2 2 2 3" />
+                <path d="m7 3-3 2" />
+                <path d="m7 3 3 2" />
+                <path d="M18 12c-.5 0-1.8.4-2.5.9l-1.5 1c-.7.5-1 1.3-1 2.1s.3 1.6 1 2.1l1.5 1c.7.5 2 .9 2.5.9" />
+                <path d="M18 12c1 0 3 .6 3 2s-2 2-3 2" />
+                <path d="M18 22c-1 0-3-.6-3-2s2-2 3-2" />
               </svg>
               <span>Add New Food</span>
             </Button>
@@ -116,10 +117,6 @@ export default function NutritionPage() {
             <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/nutrition/calculator')}>
               <Calculator className="h-6 w-6 mb-2" />
               <span>Calculate Macros</span>
-            </Button>
-            <Button className="h-auto py-4 flex flex-col" onClick={() => navigate('/clients')}>
-              <Users className="h-6 w-6 mb-2" />
-              <span>Assign to Client</span>
             </Button>
           </div>
         </CardContent>
