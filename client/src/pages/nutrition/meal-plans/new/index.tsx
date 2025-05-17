@@ -48,7 +48,8 @@ import {
   MealData,
   MealFoodItem,
   FoodData,
-  calculateMealNutrition
+  calculateMealNutrition,
+  calculateCaloriesFromMacros
 } from '@/lib/nutritionHelpers';
 
 export default function NewMealPlan() {
@@ -92,6 +93,7 @@ export default function NewMealPlan() {
     dailyProtein: 0,
     dailyCarbs: 0,
     dailyFat: 0,
+    dailyFiber: 0, // Added fiber tracking
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
@@ -209,7 +211,32 @@ export default function NewMealPlan() {
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setMealPlan(prev => ({ ...prev, [name]: value }));
+    
+    setMealPlan(prev => {
+      const updatedPlan = { 
+        ...prev, 
+        [name]: name === 'dailyCalories' || name === 'dailyProtein' || 
+                name === 'dailyCarbs' || name === 'dailyFat' || 
+                name === 'dailyFiber' ? Number(value) : value 
+      };
+      
+      // If changing any macro nutrient, recalculate calories automatically
+      if (['dailyProtein', 'dailyCarbs', 'dailyFat', 'dailyFiber'].includes(name)) {
+        // Get current macro values
+        const protein = name === 'dailyProtein' ? Number(value) : Number(prev.dailyProtein || 0);
+        const carbs = name === 'dailyCarbs' ? Number(value) : Number(prev.dailyCarbs || 0);
+        const fat = name === 'dailyFat' ? Number(value) : Number(prev.dailyFat || 0);
+        const fiber = name === 'dailyFiber' ? Number(value) : Number(prev.dailyFiber || 0);
+        
+        // Calculate calories using our formula that accounts for fiber differently
+        const calories = calculateCaloriesFromMacros(protein, carbs, fat, fiber);
+        
+        // Update calories with the calculated value
+        updatedPlan.dailyCalories = Math.round(calories);
+      }
+      
+      return updatedPlan;
+    });
   };
   
   const handleTemplateToggle = (checked: boolean) => {
@@ -444,8 +471,8 @@ export default function NewMealPlan() {
         if (foodIndex >= 0) {
           currentMeal.foods[foodIndex].quantity = quantity;
           
-          // Recalculate nutrition
-          const { calories, protein, carbs, fat } = calculateMealNutrition(
+          // Recalculate nutrition including fiber
+          const { calories, protein, carbs, fat, fiber } = calculateMealNutrition(
             currentMeal.foods, 
             foodDatabase
           );
@@ -454,6 +481,7 @@ export default function NewMealPlan() {
           currentMeal.totalProtein = protein;
           currentMeal.totalCarbs = carbs;
           currentMeal.totalFat = fat;
+          currentMeal.totalFiber = fiber;
           
           // Update the meal plan
           setMealPlan(updatedMealPlan);
@@ -1130,7 +1158,7 @@ export default function NewMealPlan() {
                       <CardDescription>{meal.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-4 gap-2 text-sm mb-2">
+                      <div className="grid grid-cols-5 gap-2 text-sm mb-2">
                         <div>
                           <p className="text-muted-foreground">Calories</p>
                           <p className="font-medium">{meal.totalCalories} kcal</p>
@@ -1146,6 +1174,11 @@ export default function NewMealPlan() {
                         <div>
                           <p className="text-muted-foreground">Fat</p>
                           <p className="font-medium">{meal.totalFat}g</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Fiber</p>
+                          <p className="font-medium">{meal.totalFiber || 0}g</p>
+                          <p className="text-xs text-muted-foreground">(2cal/g)</p>
                         </div>
                       </div>
                       
