@@ -5,6 +5,7 @@ export interface MacroTarget {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number; // Optional fiber tracking
 }
 
 export interface MealFoodItem {
@@ -17,6 +18,7 @@ export interface MealFoodItem {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number; // Added fiber tracking
 }
 
 export interface MealData {
@@ -29,6 +31,7 @@ export interface MealData {
   totalProtein: number;
   totalCarbs: number;
   totalFat: number;
+  totalFiber?: number; // Added fiber tracking
 }
 
 export interface DayData {
@@ -50,6 +53,7 @@ export interface MealPlanData {
   dailyProtein: number;
   dailyCarbs: number;
   dailyFat: number;
+  dailyFiber?: number; // Added fiber tracking
 }
 
 export interface FoodData {
@@ -62,6 +66,7 @@ export interface FoodData {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number; // Added fiber tracking
   notes?: string;
 }
 

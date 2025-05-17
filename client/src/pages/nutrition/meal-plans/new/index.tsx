@@ -886,6 +886,20 @@ export default function NewMealPlan() {
                     readOnly={!!mealPlan.dailyFat}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="dailyFiber">Daily Fiber (g)</Label>
+                  <Input 
+                    id="dailyFiber" 
+                    name="dailyFiber" 
+                    type="number"
+                    value={mealPlan.dailyFiber || 0} 
+                    onChange={handleChange} 
+                    placeholder="Daily fiber" 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Fiber counts as 2 calories/g (instead of 4 for regular carbs)
+                  </p>
+                </div>
               </div>
               
               <div className="flex items-center space-x-2">

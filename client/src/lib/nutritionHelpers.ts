@@ -421,24 +421,66 @@ export function initializeNutritionStorage(): void {
   }
 }
 
+/**
+ * Calculate precise calories based on macronutrient content
+ * Protein: 4 calories per gram
+ * Carbs: 4 calories per gram (except fiber)
+ * Fiber: 2 calories per gram
+ * Fat: 9 calories per gram
+ */
+export function calculateCaloriesFromMacros(protein: number, carbs: number, fat: number, fiber: number = 0): number {
+  // Calculate net carbs (total carbs minus fiber)
+  const netCarbs = Math.max(0, carbs - fiber);
+  
+  // Calculate calories using the specific calorie values for each macronutrient
+  const proteinCalories = protein * 4;
+  const netCarbCalories = netCarbs * 4;
+  const fiberCalories = fiber * 2; // Fiber contributes 2 calories per gram
+  const fatCalories = fat * 9;
+  
+  // Return the sum of all calories
+  return proteinCalories + netCarbCalories + fiberCalories + fatCalories;
+}
+
 // Calculate calories and macros for a meal
 export function calculateMealNutrition(mealFoods: MealFoodItem[], foodsData: FoodData[]): {
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number;
 } {
-  return mealFoods.reduce((totals, item) => {
+  const totals = mealFoods.reduce((totals, item) => {
     const food = foodsData.find(f => f.id === item.foodId);
     if (!food) return totals;
     
+    // Extract fiber content, defaulting to 0 if not provided
+    const foodFiber = food.fiber || 0;
+    const itemFiber = foodFiber * item.quantity;
+    
     return {
-      calories: totals.calories + (food.calories * item.quantity),
       protein: totals.protein + (food.protein * item.quantity),
       carbs: totals.carbs + (food.carbs * item.quantity),
-      fat: totals.fat + (food.fat * item.quantity)
+      fat: totals.fat + (food.fat * item.quantity),
+      fiber: totals.fiber + itemFiber
     };
-  }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }, { protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  
+  // Calculate calories using our precise formula
+  const calories = calculateCaloriesFromMacros(
+    totals.protein,
+    totals.carbs,
+    totals.fat,
+    totals.fiber
+  );
+  
+  return {
+    calories,
+    protein: totals.protein,
+    carbs: totals.carbs,
+    fat: totals.fat,
+    fiber: totals.fiber
+  };
 }
 
 // Calculate recommended calories based on client data
