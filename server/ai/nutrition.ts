@@ -1,5 +1,24 @@
 import OpenAI from "openai";
-import { FoodData } from "../../shared/schema";
+
+// Define FoodData interface since it's not exported from the schema
+interface FoodData {
+  id: number;
+  name: string;
+  category: string;
+  servingSize: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  isPublic?: boolean;
+  createdBy?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -115,9 +134,9 @@ Daily Macro Targets:
 - Carbs: ${macroTargets.carbs}g
 - Fat: ${macroTargets.fat}g
 
-${preferences.dietaryRestrictions?.length ? `Dietary Restrictions: ${preferences.dietaryRestrictions.join(', ')}` : ''}
-${preferences.preferredFoods?.length ? `Preferred Foods: ${preferences.preferredFoods.join(', ')}` : ''}
-${preferences.excludedFoods?.length ? `Excluded Foods: ${preferences.excludedFoods.join(', ')}` : ''}
+${preferences.dietaryRestrictions && preferences.dietaryRestrictions.length ? `Dietary Restrictions: ${preferences.dietaryRestrictions.join(', ')}` : ''}
+${preferences.preferredFoods && preferences.preferredFoods.length ? `Preferred Foods: ${preferences.preferredFoods.join(', ')}` : ''}
+${preferences.excludedFoods && preferences.excludedFoods.length ? `Excluded Foods: ${preferences.excludedFoods.join(', ')}` : ''}
 
 Available Foods List:
 ${availableFoods.map(food => 
@@ -138,11 +157,15 @@ Please create a meal plan that matches these requirements.`;
     });
 
     // Parse the response
-    const result = JSON.parse(response.choices[0].message.content) as AIGeneratedMealPlan;
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No content in AI response");
+    }
+    const result = JSON.parse(content) as AIGeneratedMealPlan;
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating meal recommendations:", error);
-    throw new Error(`Failed to generate meal recommendations: ${error.message}`);
+    throw new Error(`Failed to generate meal recommendations: ${error?.message || "Unknown error"}`);
   }
 }
 
@@ -214,10 +237,14 @@ Please suggest foods that would be good to include in a meal plan with these mac
     });
 
     // Parse the response
-    const result = JSON.parse(response.choices[0].message.content);
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No content in AI response");
+    }
+    const result = JSON.parse(content);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating food suggestions:", error);
-    throw new Error(`Failed to generate food suggestions: ${error.message}`);
+    throw new Error(`Failed to generate food suggestions: ${error?.message || "Unknown error"}`);
   }
 }
