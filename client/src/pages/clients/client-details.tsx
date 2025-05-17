@@ -543,9 +543,15 @@ export default function ClientDetails() {
             <TabsContent value="nutrition" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Nutrition Plans</h2>
-                <Button>
-                  Create Nutrition Plan
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate('/nutrition')}>
+                    <Pizza className="mr-2 h-4 w-4" />
+                    Nutrition Dashboard
+                  </Button>
+                  <Button onClick={() => navigate('/nutrition/meal-plans/new')}>
+                    Create Nutrition Plan
+                  </Button>
+                </div>
               </div>
 
               {isLoadingNutrition ? (

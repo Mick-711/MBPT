@@ -28,13 +28,25 @@ export default function ClientNutrition() {
 
   return (
     <div className="container mx-auto p-4 max-w-lg">
-      <div className="flex items-center mb-6">
-        <Link href="/">
-          <Button variant="ghost" size="icon" className="mr-2">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Nutrition</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="mr-2">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Nutrition</h1>
+        </div>
+        
+        {/* Only show the trainer view button when in trainer mode */}
+        {window.IS_TRAINER_VIEW && (
+          <Link href="/nutrition">
+            <Button variant="outline" size="sm">
+              <Pizza className="h-4 w-4 mr-2" />
+              Nutrition Dashboard
+            </Button>
+          </Link>
+        )}
       </div>
 
       {plan ? (
