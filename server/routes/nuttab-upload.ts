@@ -1,78 +1,82 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { foods } from '@shared/schema';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
-import { db } from '../db';
-import { foods, foodCategoryEnum } from '@shared/schema';
 import path from 'path';
-import { promises as fs } from 'fs';
-import { and, eq, sql } from 'drizzle-orm';
+import fs from 'fs';
 
-// Configure multer for file uploads
+const router = Router();
+
+// Configure storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Create uploads directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    fs.mkdir(uploadDir, { recursive: true })
-      .then(() => cb(null, uploadDir))
-      .catch(err => cb(err, uploadDir));
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../uploads');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-// Filter for Excel files only
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedExtensions = ['.xlsx', '.xls', '.csv'];
+// File filter
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const acceptedFileTypes = ['.xlsx', '.xls', '.csv'];
   const ext = path.extname(file.originalname).toLowerCase();
   
-  if (allowedExtensions.includes(ext)) {
+  if (acceptedFileTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only Excel and CSV files are allowed'));
+    cb(new Error(`Invalid file type. Only ${acceptedFileTypes.join(', ')} files are allowed.`));
   }
 };
 
+// Configure multer with error handling
 const upload = multer({ 
   storage,
   fileFilter,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
+}).single('file');
 
-const router = Router();
-
-// Helper to map NUTTAB category to our food categories
-function mapToFoodCategory(nuttabCategory: string): typeof foodCategoryEnum.enumValues[number] {
-  const categoryMap: Record<string, typeof foodCategoryEnum.enumValues[number]> = {
-    // Map common NUTTAB food groups to our categories
-    'Meat': 'protein',
-    'Poultry': 'protein',
-    'Fish': 'protein',
-    'Seafood': 'protein',
-    'Egg': 'protein',
-    'Legumes': 'protein',
-    'Grain': 'carbs',
-    'Bread': 'carbs',
-    'Cereal': 'carbs',
-    'Rice': 'carbs',
-    'Pasta': 'carbs',
-    'Fruit': 'fruit',
-    'Vegetable': 'vegetable',
-    'Dairy': 'dairy',
-    'Milk': 'dairy',
-    'Cheese': 'dairy',
-    'Yoghurt': 'dairy',
-    'Nuts': 'nuts',
-    'Seeds': 'seeds',
-    'Oil': 'fat',
-    'Butter': 'fat',
-    'Margarine': 'fat'
+// Function to map NUTTAB category to our food categories
+function mapToFoodCategory(nuttabCategory: string): string {
+  if (!nuttabCategory) return 'other';
+  
+  const categoryMap: Record<string, string> = {
+    'meat': 'protein',
+    'poultry': 'protein', 
+    'fish': 'protein',
+    'seafood': 'protein',
+    'egg': 'protein',
+    'legume': 'protein',
+    'grain': 'carbs',
+    'bread': 'carbs',
+    'cereal': 'carbs',
+    'rice': 'carbs',
+    'pasta': 'carbs',
+    'fruit': 'fruit',
+    'vegetable': 'vegetable',
+    'dairy': 'dairy',
+    'milk': 'dairy',
+    'cheese': 'dairy',
+    'yoghurt': 'dairy',
+    'yogurt': 'dairy',
+    'nut': 'nuts',
+    'seed': 'seeds',
+    'oil': 'fat',
+    'butter': 'fat',
+    'margarine': 'fat'
   };
   
-  // Search for partial matches in the category
+  // Try to find a match by substring
+  const lowerCategory = nuttabCategory.toLowerCase();
   for (const [key, value] of Object.entries(categoryMap)) {
-    if (nuttabCategory.toLowerCase().includes(key.toLowerCase())) {
+    if (lowerCategory.includes(key)) {
       return value;
     }
   }
@@ -80,161 +84,101 @@ function mapToFoodCategory(nuttabCategory: string): typeof foodCategoryEnum.enum
   return 'other';
 }
 
-// Upload endpoint
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+// NUTTAB Excel file upload endpoint
+router.post('/', (req: any, res: any) => {
+  upload(req, res, async function(err) {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: err.message });
     }
     
-    console.log(`Processing file: ${req.file.path}`);
-    
-    // Read the Excel file
-    const workbook = XLSX.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet);
-    
-    console.log(`Found ${data.length} rows of data`);
-    
-    // Verify the data structure
-    if (data.length === 0) {
-      return res.status(400).json({ error: 'Excel file contains no data' });
-    }
-    
-    // Process the data
-    const processedFoods = [];
-    const errors = [];
-    
-    for (let i = 0; i < data.length; i++) {
-      try {
-        const row = data[i] as any;
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+      
+      console.log(`Processing file: ${req.file.path}`);
+      
+      // Read the Excel file
+      const workbook = XLSX.readFile(req.file.path);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+      
+      console.log(`Found ${data.length} rows of data`);
+      
+      // Verify the data structure
+      if (data.length === 0) {
+        return res.status(400).json({ error: 'Excel file contains no data' });
+      }
+      
+      // Process the data and map to our food schema
+      const processedFoods = data.map((row: any, index: number) => {
+        // Extract fields based on common NUTTAB column names (flexible matching)
+        const name = row['Food Name'] || row['Name'] || row['FOOD_NAME'] || row['Food_Name'] || row['food_name'] || `NUTTAB Food ${index}`;
+        const category = row['Food Group'] || row['Category'] || row['FOOD_GROUP'] || row['Food_Group'] || row['food_group'] || 'other';
+        const servingSize = parseFloat(row['Serving Size'] || row['SERVE_SIZE'] || row['Serve_Size'] || row['serving_size'] || '100') || 100;
+        const servingUnit = row['Serving Unit'] || row['SERVE_UNIT'] || row['Serve_Unit'] || row['serving_unit'] || 'g';
         
-        // Extract fields (adjust field names based on your Excel structure)
-        const name = row['Food Name'] || row['Name'] || row['FOOD_NAME'];
-        const category = row['Food Group'] || row['Category'] || row['FOOD_GROUP'] || 'Other';
-        const servingSize = parseFloat(row['Serving Size'] || row['SERVE_SIZE'] || '100') || 100;
-        const servingUnit = row['Serving Unit'] || row['SERVE_UNIT'] || 'g';
-        const calories = parseFloat(row['Energy (kJ)'] || row['Energy'] || row['ENERGY']) / 4.184 || 0; // Convert kJ to kcal
-        const protein = parseFloat(row['Protein (g)'] || row['Protein'] || row['PROTEIN']) || 0;
-        const carbs = parseFloat(row['Carbohydrate (g)'] || row['Carbs'] || row['CARBOHYDRATE']) || 0;
-        const fat = parseFloat(row['Fat, total (g)'] || row['Fat'] || row['FAT']) || 0;
-        const fiber = parseFloat(row['Fibre (g)'] || row['Fiber'] || row['FIBRE']) || 0;
-        const sugar = parseFloat(row['Sugars (g)'] || row['Sugar'] || row['SUGARS']) || 0;
-        const sodium = parseFloat(row['Sodium (mg)'] || row['Sodium'] || row['SODIUM']) || 0;
-        
-        if (!name) {
-          throw new Error(`Row ${i + 1}: Food name is required`);
+        // Convert kJ to kcal if energy is in kJ
+        let calories = 0;
+        if (row['Energy (kJ)'] || row['ENERGY (kJ)'] || row['Energy']) {
+          const energyValue = parseFloat(row['Energy (kJ)'] || row['ENERGY (kJ)'] || row['Energy'] || '0');
+          calories = energyValue / 4.184; // Convert kJ to kcal
+        } else if (row['Calories'] || row['CALORIES'] || row['calories']) {
+          calories = parseFloat(row['Calories'] || row['CALORIES'] || row['calories'] || '0');
         }
         
-        processedFoods.push({
-          name,
+        // Extract macronutrients
+        const protein = parseFloat(row['Protein (g)'] || row['Protein'] || row['PROTEIN'] || row['protein'] || '0') || 0;
+        const carbs = parseFloat(row['Carbohydrate (g)'] || row['Carbs'] || row['CARBOHYDRATE'] || row['carbs'] || row['carbohydrate'] || '0') || 0;
+        const fat = parseFloat(row['Fat, total (g)'] || row['Fat'] || row['FAT'] || row['fat'] || '0') || 0;
+        const fiber = parseFloat(row['Fibre (g)'] || row['Fiber (g)'] || row['Fiber'] || row['FIBRE'] || row['fibre'] || row['fiber'] || '0') || 0;
+        const sugar = parseFloat(row['Sugars (g)'] || row['Sugar (g)'] || row['Sugar'] || row['SUGARS'] || row['sugar'] || row['sugars'] || '0') || 0;
+        const sodium = parseFloat(row['Sodium (mg)'] || row['SODIUM'] || row['sodium'] || '0') || 0;
+        
+        return {
+          name: name,
           brand: 'NUTTAB',
-          category: mapToFoodCategory(category) as any,
+          category: mapToFoodCategory(category),
           servingSize,
           servingUnit,
-          calories,
-          protein,
-          carbs,
-          fat,
-          fiber,
-          sugar,
-          sodium,
+          calories: Math.round(calories * 10) / 10, // Round to 1 decimal place
+          protein: Math.round(protein * 10) / 10,
+          carbs: Math.round(carbs * 10) / 10,
+          fat: Math.round(fat * 10) / 10,
+          fiber: Math.round(fiber * 10) / 10,
+          sugar: Math.round(sugar * 10) / 10,
+          sodium: Math.round(sodium),
           isPublic: true,
-          createdBy: null
-        });
-      } catch (error) {
-        errors.push(`Error in row ${i + 1}: ${(error as Error).message}`);
-      }
-    }
-    
-    console.log(`Processed ${processedFoods.length} foods with ${errors.length} errors`);
-    
-    if (processedFoods.length === 0) {
-      return res.status(400).json({ 
-        error: 'No valid food data could be processed',
-        details: errors
+          createdBy: req.user?.id || null
+        };
       });
-    }
-    
-    // Insert the foods into database
-    const insertedFoods = [];
-    const insertErrors = [];
-    
-    // Bulk insert is faster but we'll handle individual errors too
-    try {
-      const result = await db.insert(foods)
-        .values(processedFoods)
-        .returning();
       
-      insertedFoods.push(...result);
-      console.log(`Bulk inserted ${result.length} foods`);
+      // Insert the foods in batches
+      const batchSize = 50;
+      const results = [];
+      
+      for (let i = 0; i < processedFoods.length; i += batchSize) {
+        const batch = processedFoods.slice(i, i + batchSize);
+        const insertResult = await db.insert(foods).values(batch).returning();
+        results.push(...insertResult);
+        console.log(`Imported batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(processedFoods.length / batchSize)}`);
+      }
+      
+      // Clean up the temporary file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(200).json({ 
+        success: true,
+        message: `Successfully imported ${results.length} foods from NUTTAB data`,
+        foods: results.slice(0, 10) // Return just a sample to keep response size reasonable
+      });
     } catch (error) {
-      console.error('Bulk insert failed, trying individually:', error);
-      
-      // If bulk insert fails, try one by one
-      for (const food of processedFoods) {
-        try {
-          // Check if food already exists with same name and brand
-          const existingFoods = await db.select()
-            .from(foods)
-            .where(
-              and(
-                eq(foods.name, food.name),
-                eq(foods.brand, 'NUTTAB')
-              )
-            );
-          
-          if (existingFoods.length > 0) {
-            console.log(`Food "${food.name}" already exists, skipping`);
-            continue;
-          }
-          
-          const [insertedFood] = await db.insert(foods)
-            .values(food)
-            .returning();
-            
-          if (insertedFood) {
-            insertedFoods.push(insertedFood);
-          }
-        } catch (insertError) {
-          insertErrors.push(`Error inserting "${food.name}": ${(insertError as Error).message}`);
-        }
-      }
+      console.error('Error processing NUTTAB file:', error);
+      res.status(500).json({ error: 'Failed to process NUTTAB file', details: error.message });
     }
-    
-    // Clean up the temporary file
-    try {
-      await fs.unlink(req.file.path);
-    } catch (unlinkError) {
-      console.error('Error deleting temporary file:', unlinkError);
-    }
-    
-    res.status(201).json({
-      message: `Successfully imported ${insertedFoods.length} foods from NUTTAB`,
-      totalProcessed: processedFoods.length,
-      success: insertedFoods.length,
-      errors: insertErrors.length,
-      errorDetails: insertErrors.length > 0 ? insertErrors : undefined
-    });
-    
-  } catch (error) {
-    console.error('Error processing file upload:', error);
-    
-    // Clean up if there was an error
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting temporary file:', unlinkError);
-      }
-    }
-    
-    res.status(500).json({ 
-      error: 'Failed to process the uploaded file',
-      message: (error as Error).message 
-    });
-  }
+  });
 });
 
 export default router;
