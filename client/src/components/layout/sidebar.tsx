@@ -119,6 +119,11 @@ export default function Sidebar() {
               label="Nutrition"
               href="/nutrition"
               active={location.startsWith("/nutrition")}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/nutrition';
+                }
+              }}
             />
             <SidebarItem
               icon={<MessageSquare size={18} />}
