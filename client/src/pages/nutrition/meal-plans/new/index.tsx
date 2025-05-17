@@ -9,8 +9,10 @@ import {
   Save, 
   Trash, 
   Edit, 
-  Filter 
+  Filter,
+  Sparkles
 } from 'lucide-react';
+import InlineMealPlanAI from '@/components/nutrition/InlineMealPlanAI';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
