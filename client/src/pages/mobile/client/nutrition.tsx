@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pizza, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, Pizza, Clock, CheckCircle, Calendar, Plus } from 'lucide-react';
 
 export default function ClientNutrition() {
   const { data: nutritionData, isLoading } = useQuery({
@@ -39,7 +39,7 @@ export default function ClientNutrition() {
         </div>
         
         {/* Only show the trainer view button when in trainer mode */}
-        {window.IS_TRAINER_VIEW && (
+        {typeof window !== 'undefined' && window.IS_TRAINER_VIEW && (
           <Link href="/nutrition">
             <Button variant="outline" size="sm">
               <Pizza className="h-4 w-4 mr-2" />
@@ -109,7 +109,16 @@ export default function ClientNutrition() {
         </Card>
       )}
 
-      <h2 className="text-xl font-bold mb-4">Today's Meals</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Today's Meals</h2>
+        <Button size="sm" variant="outline" onClick={() => {
+          if (typeof window !== 'undefined' && window.IS_TRAINER_VIEW) {
+            window.location.href = '/nutrition/food-database/new';
+          }
+        }}>
+          <Plus className="h-4 w-4 mr-1" /> Add Food
+        </Button>
+      </div>
       
       {todaysMeals.length === 0 ? (
         <div className="text-center p-6 bg-muted rounded-lg mb-6">
