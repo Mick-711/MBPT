@@ -132,6 +132,80 @@ export default function NutritionPage() {
         </Card>
       </div>
       
+      {/* Templates section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Book className="h-5 w-5 mr-2 text-primary" />
+            Nutrition Templates
+          </CardTitle>
+          <CardDescription>Quick access to your saved meal plan templates</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {mealPlans
+              ?.filter((plan) => plan.isTemplate)
+              .slice(0, 3)
+              .map((template) => (
+                <Card key={template.id} className="overflow-hidden border border-muted">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base">{template.name}</CardTitle>
+                    <CardDescription className="text-xs">{template.description || 'No description'}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="text-sm flex items-center gap-2 mb-2">
+                      <List className="h-4 w-4 text-muted-foreground" />
+                      <span>{template.meals?.length || 0} meals</span>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => navigate(`/nutrition/meal-plans/${template.id}`)}
+                      >
+                        View
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => navigate(`/nutrition/meal-plans/new?templateId=${template.id}`)}
+                      >
+                        Use
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            
+            {(!mealPlans || mealPlans.filter(p => p.isTemplate).length === 0) && (
+              <div className="col-span-3 py-8 text-center text-muted-foreground">
+                <Book className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                <p>No templates created yet</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => navigate('/nutrition/meal-plans/new?template=true')}
+                >
+                  Create Your First Template
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            variant="ghost" 
+            className="w-full flex items-center justify-center"
+            onClick={() => navigate('/nutrition/meal-plans?filter=templates')}
+          >
+            View All Templates
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>

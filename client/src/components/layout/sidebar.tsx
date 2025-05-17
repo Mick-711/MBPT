@@ -24,6 +24,7 @@ const SidebarItem = ({ icon, label, href, active, badge, onClick }: SidebarItemP
   <li className="mb-1 px-3">
     <Link 
       href={href}
+      onClick={onClick}
       className={`flex items-center py-2 px-3 rounded-lg font-medium ${
         active
           ? "text-gray-900 bg-primary-50 dark:bg-sidebar-accent dark:text-sidebar-accent-foreground"
