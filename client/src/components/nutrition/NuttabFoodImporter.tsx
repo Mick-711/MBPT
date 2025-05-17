@@ -224,7 +224,7 @@ export default function NuttabFoodImporter() {
                       <div className="font-medium">{food.calories} kcal</div>
                       <div className="text-muted-foreground">
                         P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g{" "}
-                        {food.fiber > 0 && `• Fiber: ${food.fiber}g`}
+                        {food.fiber ? `• Fiber: ${food.fiber}g` : ''}
                       </div>
                     </div>
                   </div>

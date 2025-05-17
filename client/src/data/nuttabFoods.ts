@@ -1,6 +1,6 @@
 import { FoodData } from "@/lib/nutritionHelpers";
 
-// Create a simplified FoodData type for NUTTAB imports
+// Create a simplified FoodData type for NUTTAB imports that matches our needs
 export interface NuttabFoodData {
   id: number;
   name: string;
@@ -12,6 +12,9 @@ export interface NuttabFoodData {
   carbs: number;
   fat: number;
   fiber: number;
+  brand?: string;
+  sugar?: number;
+  sodium?: number;
 }
 
 // Convert NuttabFoodData to full FoodData
