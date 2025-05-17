@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -9,27 +9,20 @@ import {
   Plus,
   ChevronRight,
   Book,
-  List,
-  Users
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 import { 
   initializeNutritionStorage, 
   getMealPlansFromStorage,
   getFoodsFromStorage,
-  MealPlanData,
-  FoodData
 } from '@/lib/nutritionHelpers';
 
 export default function NutritionPage() {
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState('overview');
   
   // Initialize nutrition storage if empty
   useEffect(() => {
@@ -47,24 +40,6 @@ export default function NutritionPage() {
     queryKey: ['foods'],
     queryFn: () => getFoodsFromStorage()
   });
-  
-  // Handle navigation between sections
-  const navigateTo = (section: string) => {
-    switch(section) {
-      case 'food-database':
-        navigate('/nutrition/food-database');
-        break;
-      case 'meal-plans':
-        navigate('/nutrition/meal-plans');
-        break;
-      case 'calculator':
-        navigate('/nutrition/calculator');
-        break;
-      default:
-        // Stay on current page
-        break;
-    }
-  };
   
   // Sample data for recently used foods
   const recentlyUsedFoods = foods?.slice(0, 5) || [];
@@ -171,118 +146,96 @@ export default function NutritionPage() {
         </Card>
       </div>
       
-
-      
       {/* Recent info cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Pizza className="h-5 w-5 mr-2 text-primary" />
-                  Recently Used Foods
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentlyUsedFoods.length > 0 ? (
-                    recentlyUsedFoods.map((food) => (
-                      <div key={food.id} className="flex justify-between items-center py-2 border-b">
-                        <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {food.servingSize} {food.servingUnit} • {food.category}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-medium">{food.calories} kcal</div>
-                          <div className="text-sm text-muted-foreground">
-                            P: {food.protein}g C: {food.carbs}g F: {food.fat}g
-                          </div>
-                        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Pizza className="h-5 w-5 mr-2 text-primary" />
+              Recently Used Foods
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentlyUsedFoods.length > 0 ? (
+                recentlyUsedFoods.map((food) => (
+                  <div key={food.id} className="flex justify-between items-center py-2 border-b">
+                    <div>
+                      <div className="font-medium">{food.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {food.servingSize} {food.servingUnit} • {food.category}
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No recently used foods</p>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => navigate('/nutrition/food-database')}>View All Foods</Button>
-                <Button onClick={() => navigate('/nutrition/food-database/new')}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add Food
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Book className="h-5 w-5 mr-2 text-primary" />
-                  Recent Meal Plans
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mealPlans && mealPlans.length > 0 ? (
-                    mealPlans.slice(0, 3).map((plan) => (
-                      <div key={plan.id} className="flex justify-between items-start py-2 border-b">
-                        <div>
-                          <div className="font-medium">{plan.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {plan.dailyCalories} kcal • {plan.days?.length || 0} day plan
-                          </div>
-                        </div>
-                        <div className="flex gap-2 items-center">
-                          <Badge variant={plan.isTemplate ? 'outline' : 'default'}>
-                            {plan.isTemplate ? 'Template' : 'Client Plan'}
-                          </Badge>
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/nutrition/meal-plans/${plan.id}`)}>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    <div className="text-right">
+                      <div className="font-medium">{food.calories} kcal</div>
+                      <div className="text-sm text-muted-foreground">
+                        P: {food.protein}g C: {food.carbs}g F: {food.fat}g
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No meal plans yet</p>
                     </div>
-                  )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No recently used foods</p>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => navigate('/nutrition/meal-plans')}>
-                  View All Plans
-                </Button>
-                <Button onClick={() => navigate('/nutrition/meal-plans/new')}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  Create Plan
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </TabsContent>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => navigate('/nutrition/food-database')}>View All Foods</Button>
+            <Button onClick={() => navigate('/nutrition/food-database/new')}>
+              <Plus className="mr-1 h-4 w-4" />
+              Add Food
+            </Button>
+          </CardFooter>
+        </Card>
         
-        <TabsContent value="mealPlans" className="tab-content">
-          <div className="flex justify-center items-center p-12">
-            <p className="text-muted-foreground">Redirecting to Meal Plans...</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="foodDatabase" className="tab-content">
-          <div className="flex justify-center items-center p-12">
-            <p className="text-muted-foreground">Redirecting to Food Database...</p>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="macroCalculator" className="tab-content">
-          <div className="flex justify-center items-center p-12">
-            <p className="text-muted-foreground">Redirecting to Macro Calculator...</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Book className="h-5 w-5 mr-2 text-primary" />
+              Recent Meal Plans
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {mealPlans && mealPlans.length > 0 ? (
+                mealPlans.slice(0, 3).map((plan) => (
+                  <div key={plan.id} className="flex justify-between items-start py-2 border-b">
+                    <div>
+                      <div className="font-medium">{plan.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {plan.dailyCalories} kcal • {plan.days?.length || 0} day plan
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Badge variant={plan.isTemplate ? 'outline' : 'default'}>
+                        {plan.isTemplate ? 'Template' : 'Client Plan'}
+                      </Badge>
+                      <Button variant="ghost" size="icon" onClick={() => navigate(`/nutrition/meal-plans/${plan.id}`)}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No meal plans yet</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => navigate('/nutrition/meal-plans')}>
+              View All Plans
+            </Button>
+            <Button onClick={() => navigate('/nutrition/meal-plans/new')}>
+              <Plus className="mr-1 h-4 w-4" />
+              Create Plan
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
