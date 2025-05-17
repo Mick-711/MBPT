@@ -261,7 +261,7 @@ export default function NutritionPage() {
           <TabsTrigger value="macroCalculator">Macro Calculator</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4 tab-content">
           {/* Stats overview cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -416,19 +416,19 @@ export default function NutritionPage() {
           </div>
         </TabsContent>
         
-        <TabsContent value="mealPlans">
+        <TabsContent value="mealPlans" className="tab-content">
           <div className="flex justify-center items-center p-12">
             <p className="text-muted-foreground">Redirecting to Meal Plans...</p>
           </div>
         </TabsContent>
         
-        <TabsContent value="foodDatabase">
+        <TabsContent value="foodDatabase" className="tab-content">
           <div className="flex justify-center items-center p-12">
             <p className="text-muted-foreground">Redirecting to Food Database...</p>
           </div>
         </TabsContent>
         
-        <TabsContent value="macroCalculator">
+        <TabsContent value="macroCalculator" className="tab-content">
           <div className="flex justify-center items-center p-12">
             <p className="text-muted-foreground">Redirecting to Macro Calculator...</p>
           </div>
