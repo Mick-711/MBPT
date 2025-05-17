@@ -562,55 +562,83 @@ export default function NewMealPlan() {
                   </div>
                 </div>
                 <DialogFooter className="flex space-x-2 sm:justify-end">
-                  <Button variant="outline" type="button">
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
-                    onClick={() => {
-                      // Create default meals
-                      const mealNames = ['Breakfast', 'Lunch', 'Dinner'];
-                      const times = ['08:00', '13:00', '19:00'];
-                      
-                      // Calculate per-meal macros
-                      const breakfastRatio = 0.25;
-                      const lunchRatio = 0.4;
-                      const dinnerRatio = 0.35;
-                      const ratios = [breakfastRatio, lunchRatio, dinnerRatio];
-                      
-                      const totalProtein = mealPlan.dailyProtein || 0;
-                      const totalCarbs = mealPlan.dailyCarbs || 0;
-                      const totalFat = mealPlan.dailyFat || 0;
-                      const totalCalories = mealPlan.dailyCalories || 0;
-                      
-                      const meals = mealNames.map((name, index) => {
-                        const ratio = ratios[index];
-                        return {
-                          id: Date.now() + index,
-                          name,
-                          description: `AI-generated ${name.toLowerCase()} suggestion`,
-                          time: times[index],
-                          foods: [],
-                          totalCalories: Math.round(totalCalories * ratio),
-                          totalProtein: Math.round(totalProtein * ratio),
-                          totalCarbs: Math.round(totalCarbs * ratio),
-                          totalFat: Math.round(totalFat * ratio)
-                        };
-                      });
-                      
-                      // Update meal plan with the new meals
-                      setMealPlan(prev => ({
-                        ...prev,
-                        days: [{ dayNumber: 1, meals: meals }]
-                      }));
-                      
-                      // Navigate to the foods tab
-                      setActiveTab('foods');
-                    }}
-                  >
-                    Generate Plan
-                  </Button>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" type="button">
+                      Cancel
+                    </Button>
+                  </DialogTrigger>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600"
+                      onClick={() => {
+                        // Need to use setTimeout to allow dialog to close first before updating state
+                        setTimeout(() => {
+                          // Create default meals
+                          const mealNames = ['Breakfast', 'Lunch', 'Dinner'];
+                          const times = ['08:00', '13:00', '19:00'];
+                          
+                          // Calculate per-meal macros
+                          const breakfastRatio = 0.25;
+                          const lunchRatio = 0.4;
+                          const dinnerRatio = 0.35;
+                          const ratios = [breakfastRatio, lunchRatio, dinnerRatio];
+                          
+                          const totalProtein = mealPlan.dailyProtein || 0;
+                          const totalCarbs = mealPlan.dailyCarbs || 0;
+                          const totalFat = mealPlan.dailyFat || 0;
+                          const totalCalories = mealPlan.dailyCalories || 0;
+                          
+                          const meals = mealNames.map((name, index) => {
+                            const ratio = ratios[index];
+                            return {
+                              id: Date.now() + index,
+                              name,
+                              description: `AI-generated ${name.toLowerCase()} suggestion`,
+                              time: times[index],
+                              foods: [],
+                              totalCalories: Math.round(totalCalories * ratio),
+                              totalProtein: Math.round(totalProtein * ratio),
+                              totalCarbs: Math.round(totalCarbs * ratio),
+                              totalFat: Math.round(totalFat * ratio)
+                            };
+                          });
+                          
+                          // Update meal plan with the new meals
+                          setMealPlan(prev => ({
+                            ...prev,
+                            days: [{ dayNumber: 1, meals: meals }]
+                          }));
+                          
+                          // Navigate to the foods tab
+                          setActiveTab('foods');
+                          
+                          // Show success toast message
+                          const toast = document.createElement('div');
+                          toast.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 animate-in slide-in-from-right';
+                          toast.innerHTML = `
+                            <div class="flex items-center">
+                              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                              <p><strong>Success!</strong> AI meal plan created with balanced macros.</p>
+                            </div>
+                          `;
+                          document.body.appendChild(toast);
+                          
+                          // Remove toast after 3 seconds
+                          setTimeout(() => {
+                            toast.classList.add('animate-out', 'slide-out-to-right');
+                            setTimeout(() => {
+                              document.body.removeChild(toast);
+                            }, 300);
+                          }, 3000);
+                        }, 100);
+                      }}
+                    >
+                      Generate Plan
+                    </Button>
+                  </DialogTrigger>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
