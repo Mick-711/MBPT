@@ -242,10 +242,42 @@ export default function NewMealPlan() {
     const dayIndex = 0; // We're working with a single day for simplicity
     let mealIndex = 0;
     
-    // Find the meal index based on the type
-    if (currentMealType === 'breakfast') mealIndex = 0;
-    else if (currentMealType === 'lunch') mealIndex = 1;
-    else if (currentMealType === 'dinner') mealIndex = 2;
+    // Check if we need to add a snack meal
+    if (currentMealType === 'snacks') {
+      // Look for an existing snack meal
+      const snackMealIndex = updatedMealPlan.days?.[dayIndex]?.meals?.findIndex(
+        m => m.name === 'Snacks'
+      );
+      
+      if (snackMealIndex === -1 || snackMealIndex === undefined) {
+        // Create a new snack meal
+        const snackMeal: MealData = {
+          id: Date.now(),
+          name: 'Snacks',
+          description: 'Snacks throughout the day',
+          time: '15:00',
+          foods: [],
+          totalCalories: 0,
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFat: 0
+        };
+        
+        // Add to meal plan
+        if (updatedMealPlan.days && updatedMealPlan.days[dayIndex]) {
+          updatedMealPlan.days[dayIndex].meals.push(snackMeal);
+          mealIndex = updatedMealPlan.days[dayIndex].meals.length - 1;
+        }
+      } else {
+        // Use existing snack meal
+        mealIndex = snackMealIndex;
+      }
+    } else {
+      // Find the meal index based on the type
+      if (currentMealType === 'breakfast') mealIndex = 0;
+      else if (currentMealType === 'lunch') mealIndex = 1;
+      else if (currentMealType === 'dinner') mealIndex = 2;
+    }
     
     // Add food to the meal
     if (updatedMealPlan.days && updatedMealPlan.days[dayIndex] && updatedMealPlan.days[dayIndex].meals) {
@@ -300,9 +332,24 @@ export default function NewMealPlan() {
     const dayIndex = 0;
     let mealIndex = 0;
     
-    if (mealType === 'breakfast') mealIndex = 0;
-    else if (mealType === 'lunch') mealIndex = 1;
-    else if (mealType === 'dinner') mealIndex = 2;
+    // Find the meal index based on the type
+    if (mealType === 'snacks') {
+      // Look for a snack meal
+      const snackMealIndex = updatedMealPlan.days?.[dayIndex]?.meals?.findIndex(
+        m => m.name === 'Snacks'
+      );
+      
+      if (snackMealIndex !== -1 && snackMealIndex !== undefined) {
+        mealIndex = snackMealIndex;
+      } else {
+        // No snack meal found, nothing to remove
+        return;
+      }
+    } else {
+      if (mealType === 'breakfast') mealIndex = 0;
+      else if (mealType === 'lunch') mealIndex = 1;
+      else if (mealType === 'dinner') mealIndex = 2;
+    }
     
     if (updatedMealPlan.days && updatedMealPlan.days[dayIndex] && updatedMealPlan.days[dayIndex].meals) {
       const currentMeal = updatedMealPlan.days[dayIndex].meals[mealIndex];
@@ -327,14 +374,22 @@ export default function NewMealPlan() {
           const percentages = {
             breakfast: 0.25,
             lunch: 0.4,
-            dinner: 0.35
+            dinner: 0.35,
+            snacks: 0.1
           };
-          const percentage = percentages[mealType as keyof typeof percentages] || 0.25;
+          const percentage = percentages[mealType as keyof typeof percentages] || 0.1;
           
           currentMeal.totalCalories = Math.round((mealPlan.dailyCalories || 0) * percentage);
           currentMeal.totalProtein = Math.round((mealPlan.dailyProtein || 0) * percentage);
           currentMeal.totalCarbs = Math.round((mealPlan.dailyCarbs || 0) * percentage);
           currentMeal.totalFat = Math.round((mealPlan.dailyFat || 0) * percentage);
+        }
+        
+        // If it's a snack and there are no more foods, remove the whole snack meal
+        if (mealType === 'snacks' && currentMeal.foods.length === 0) {
+          updatedMealPlan.days[dayIndex].meals = updatedMealPlan.days[dayIndex].meals.filter(
+            (_, i) => i !== mealIndex
+          );
         }
         
         // Update the meal plan
@@ -359,9 +414,24 @@ export default function NewMealPlan() {
     const dayIndex = 0;
     let mealIndex = 0;
     
-    if (mealType === 'breakfast') mealIndex = 0;
-    else if (mealType === 'lunch') mealIndex = 1;
-    else if (mealType === 'dinner') mealIndex = 2;
+    // Find the meal index based on the type
+    if (mealType === 'snacks') {
+      // Look for a snack meal
+      const snackMealIndex = updatedMealPlan.days?.[dayIndex]?.meals?.findIndex(
+        m => m.name === 'Snacks'
+      );
+      
+      if (snackMealIndex !== -1 && snackMealIndex !== undefined) {
+        mealIndex = snackMealIndex;
+      } else {
+        // No snack meal found, nothing to update
+        return;
+      }
+    } else {
+      if (mealType === 'breakfast') mealIndex = 0;
+      else if (mealType === 'lunch') mealIndex = 1;
+      else if (mealType === 'dinner') mealIndex = 2;
+    }
     
     if (updatedMealPlan.days && updatedMealPlan.days[dayIndex] && updatedMealPlan.days[dayIndex].meals) {
       const currentMeal = updatedMealPlan.days[dayIndex].meals[mealIndex];
@@ -600,17 +670,30 @@ export default function NewMealPlan() {
                           {suggestedFoods.protein.map(food => (
                             <li key={food.id} className="flex justify-between items-center text-sm">
                               <span>{food.name} ({food.protein}g per {food.servingSize}{food.servingUnit})</span>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => {
-                                  setCurrentMealType('breakfast');
-                                  addFoodToMeal(food);
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Select 
+                                  onValueChange={(value) => setCurrentMealType(value)}
+                                  defaultValue="breakfast"
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue placeholder="Meal" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                                    <SelectItem value="lunch">Lunch</SelectItem>
+                                    <SelectItem value="dinner">Dinner</SelectItem>
+                                    <SelectItem value="snacks">Snacks</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => addFoodToMeal(food)}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
                             </li>
                           ))}
                         </ul>
@@ -626,17 +709,30 @@ export default function NewMealPlan() {
                           {suggestedFoods.carbs.map(food => (
                             <li key={food.id} className="flex justify-between items-center text-sm">
                               <span>{food.name} ({food.carbs}g per {food.servingSize}{food.servingUnit})</span>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setCurrentMealType('lunch');
-                                  addFoodToMeal(food);
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Select 
+                                  onValueChange={(value) => setCurrentMealType(value)}
+                                  defaultValue="lunch"
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue placeholder="Meal" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                                    <SelectItem value="lunch">Lunch</SelectItem>
+                                    <SelectItem value="dinner">Dinner</SelectItem>
+                                    <SelectItem value="snacks">Snacks</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => addFoodToMeal(food)}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
                             </li>
                           ))}
                         </ul>
@@ -652,17 +748,30 @@ export default function NewMealPlan() {
                           {suggestedFoods.fat.map(food => (
                             <li key={food.id} className="flex justify-between items-center text-sm">
                               <span>{food.name} ({food.fat}g per {food.servingSize}{food.servingUnit})</span>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setCurrentMealType('dinner');
-                                  addFoodToMeal(food);
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Select 
+                                  onValueChange={(value) => setCurrentMealType(value)}
+                                  defaultValue="dinner"
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue placeholder="Meal" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                                    <SelectItem value="lunch">Lunch</SelectItem>
+                                    <SelectItem value="dinner">Dinner</SelectItem>
+                                    <SelectItem value="snacks">Snacks</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => addFoodToMeal(food)}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
                             </li>
                           ))}
                         </ul>
