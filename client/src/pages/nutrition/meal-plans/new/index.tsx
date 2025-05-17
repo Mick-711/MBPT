@@ -1072,7 +1072,32 @@ export default function NewMealPlan() {
               
               {/* Meal Plan Foods */}
               <div>
-                <h3 className="text-base font-medium mb-2">Meal Plan</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-base font-medium">Meal Plan</h3>
+                  {mealPlan.dailyCalories > 0 && (
+                    <InlineMealPlanAI 
+                      macroTargets={{
+                        calories: mealPlan.dailyCalories || 0,
+                        protein: mealPlan.dailyProtein || 0,
+                        carbs: mealPlan.dailyCarbs || 0,
+                        fat: mealPlan.dailyFat || 0
+                      }}
+                      onMealsGenerated={(generatedMeals) => {
+                        // Update meal plan with the new meals
+                        setMealPlan(prev => ({
+                          ...prev,
+                          days: prev.days ? [{ 
+                            ...prev.days[0], 
+                            meals: generatedMeals 
+                          }] : [{ 
+                            dayNumber: 1, 
+                            meals: generatedMeals 
+                          }]
+                        }));
+                      }}
+                    />
+                  )}
+                </div>
                 
                 {mealPlan.days && mealPlan.days[0]?.meals?.map((meal, index) => (
                   <Card key={index} className="mb-4">
