@@ -156,6 +156,14 @@ export default function MacroCalculatorPage() {
     setActiveTab('calculator');
   };
   
+  // Handle Create Meal Plan
+  const handleCreateMealPlan = () => {
+    if (results) {
+      // Navigate to the meal plan creation page with macro targets
+      navigate(`/nutrition/meal-plans/new?protein=${results.protein}&carbs=${results.carbs}&fat=${results.fat}`);
+    }
+  };
+  
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
@@ -648,7 +656,7 @@ export default function MacroCalculatorPage() {
                   <Button variant="outline" onClick={resetCalculator}>
                     New Calculation
                   </Button>
-                  <Button>
+                  <Button onClick={handleCreateMealPlan} className="btn-primary">
                     Create Meal Plan
                   </Button>
                 </CardFooter>
