@@ -110,9 +110,9 @@ export default function NutritionPage() {
                 <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
                 Food Library
               </div>
-              <Badge variant="outline" className="ml-2">
+              <span className="text-base font-semibold text-muted-foreground">
                 {foods?.length || 0} items
-              </Badge>
+              </span>
             </CardTitle>
             <CardDescription>Browse and manage your food database</CardDescription>
           </CardHeader>
@@ -136,9 +136,9 @@ export default function NutritionPage() {
                 <Calendar className="h-5 w-5 mr-2 text-primary" />
                 Meal Plan Library
               </div>
-              <Badge variant="outline" className="ml-2">
+              <span className="text-base font-semibold text-muted-foreground">
                 {mealPlans?.length || 0} plans
-              </Badge>
+              </span>
             </CardTitle>
             <CardDescription>Access your meal plans and templates</CardDescription>
           </CardHeader>
