@@ -105,9 +105,14 @@ export default function NutritionPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <Card className="h-full card">
           <CardHeader className="card-header">
-            <CardTitle className="flex items-center">
-              <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
-              Food Library
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <ShoppingCart className="h-5 w-5 mr-2 text-primary" />
+                Food Library
+              </div>
+              <Badge variant="outline" className="ml-2">
+                {foods?.length || 0} items
+              </Badge>
             </CardTitle>
             <CardDescription>Browse and manage your food database</CardDescription>
           </CardHeader>
@@ -126,9 +131,14 @@ export default function NutritionPage() {
         
         <Card className="h-full card">
           <CardHeader className="card-header">
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-primary" />
-              Meal Plan Library
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-primary" />
+                Meal Plan Library
+              </div>
+              <Badge variant="outline" className="ml-2">
+                {mealPlans?.length || 0} plans
+              </Badge>
             </CardTitle>
             <CardDescription>Access your meal plans and templates</CardDescription>
           </CardHeader>
