@@ -163,10 +163,10 @@ function Router() {
       <Route path="/progress/hydration" component={ClientHydration} />
       
       {/* Legacy client routes for backward compatibility */}
-      <Route path="/workouts" component={ClientWorkouts} />
-      <Route path="/nutrition" component={ClientNutrition} />
-      <Route path="/messages" component={ClientMessages} />
-      <Route path="/profile" component={ClientProfile} />
+      <Route path="/mobile/workouts" component={ClientWorkouts} />
+      <Route path="/mobile/nutrition" component={ClientNutrition} />
+      <Route path="/mobile/messages" component={ClientMessages} />
+      <Route path="/mobile/profile" component={ClientProfile} />
       
       {/* Trainer routes */}
       <Route path="/trainer/dashboard" component={Dashboard} />
