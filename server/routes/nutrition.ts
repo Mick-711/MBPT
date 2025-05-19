@@ -1,13 +1,24 @@
+// server/routes/nutrition.ts
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { foods } from '../../shared/schema';
 import { sql, eq, ilike, and, desc, asc } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
+import multer from 'multer';
+import { importFoodsFromBuffer, importJobs } from '../../scripts/importFoodService';
 import { foodCategoryEnum } from '../../shared/schema';
 
 const router = Router();
 
-// GET /api/nutrition/foods
-router.get('/foods', async (req, res) => {
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// GET /api/nutrition/foods - Get foods with filtering, sorting, and pagination
+router.get('/foods', async (req: Request, res: Response) => {
   try {
     // parse & normalize query-params
     const {
@@ -69,38 +80,102 @@ router.get('/foods', async (req, res) => {
   }
 });
 
-// Get food by ID
-router.get('/foods/:id', async (req, res) => {
+// GET /api/nutrition/foods/categories - Get all food categories
+router.get('/foods/categories', async (_req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
-    const food = await db.select().from(foods).where(eq(foods.id, id)).limit(1);
-    
-    if (food.length === 0) {
-      return res.status(404).json({ error: 'Food not found' });
-    }
-    
-    res.json(food[0]);
-  } catch (error) {
-    console.error('Error fetching food:', error);
-    res.status(500).json({ error: 'Failed to fetch food' });
+    const categories = foodCategoryEnum.enumValues;
+    res.json({ categories });
+  } catch (err: any) {
+    console.error('Error in GET /api/nutrition/foods/categories:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Get unique food categories with counts
-router.get('/food-categories', async (req, res) => {
+// POST /api/nutrition/foods/import - Import foods from Excel file
+router.post('/foods/import', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const categoryResults = await db
-      .select({
-        category: foods.category,
-        count: sql<number>`count(*)`
-      })
-      .from(foods)
-      .groupBy(foods.category);
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
     
-    res.json(categoryResults);
-  } catch (error) {
-    console.error('Error fetching food categories:', error);
-    res.status(500).json({ error: 'Failed to fetch food categories' });
+    // Check file type
+    if (!req.file.mimetype.includes('spreadsheet') && 
+        !req.file.mimetype.includes('excel') && 
+        !req.file.originalname.match(/\.(xlsx|xls|csv)$/i)) {
+      return res.status(400).json({ 
+        message: 'Invalid file type. Please upload an Excel (.xlsx, .xls) or CSV file.' 
+      });
+    }
+    
+    // Create a job ID for tracking
+    const jobId = uuidv4();
+    
+    // Start the import process in the background
+    setTimeout(async () => {
+      try {
+        await importFoodsFromBuffer(req.file!.buffer, { jobId });
+      } catch (err) {
+        console.error('Background import error:', err);
+        const job = importJobs.get(jobId);
+        if (job) {
+          job.status = 'failed';
+          job.success = false;
+          job.errorMessage = (err as Error).message;
+        }
+      }
+    }, 0);
+    
+    // Return the job ID immediately
+    res.status(202).json({ 
+      message: 'Import started',
+      jobId
+    });
+  } catch (err: any) {
+    console.error('Error in POST /api/nutrition/foods/import:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/nutrition/foods/import/:jobId - Get import job status
+router.get('/foods/import/:jobId', async (req: Request, res: Response) => {
+  try {
+    const jobId = req.params.jobId;
+    const job = importJobs.get(jobId);
+    
+    if (!job) {
+      return res.status(404).json({ message: 'Import job not found' });
+    }
+    
+    res.json(job);
+  } catch (err: any) {
+    console.error('Error in GET /api/nutrition/foods/import/:jobId:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/nutrition/foods/:id - Get a specific food item by ID
+router.get('/foods/:id', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+    
+    const foodItem = await db
+      .select()
+      .from(foods)
+      .where(eq(foods.id, id))
+      .limit(1);
+      
+    if (!foodItem || foodItem.length === 0) {
+      return res.status(404).json({ message: 'Food item not found' });
+    }
+    
+    res.json(foodItem[0]);
+  } catch (err: any) {
+    console.error('Error in GET /api/nutrition/foods/:id:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 

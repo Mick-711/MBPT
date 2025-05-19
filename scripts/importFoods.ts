@@ -9,49 +9,65 @@ import { importFoodsFromBuffer } from './importFoodService';
  */
 async function importFoods() {
   try {
-    // Get the file path
-    const filePath = path.join(__dirname, '../data/food_items.xlsx');
-    console.log(`📥 Loading Excel file: ${filePath}`);
+    const filePath = process.argv[2] || path.join(__dirname, '../data/nutrient_file.xlsx');
     
-    // Check if file exists
+    console.log(`📂 Looking for file: ${filePath}`);
+    
     if (!fs.existsSync(filePath)) {
-      throw new Error(`File not found: ${filePath}`);
+      console.error(`❌ File not found: ${filePath}`);
+      console.log('');
+      console.log('Usage: npx tsx scripts/importFoods.ts [path-to-excel-file]');
+      console.log('');
+      console.log('Example: npx tsx scripts/importFoods.ts ./data/food_data.xlsx');
+      process.exit(1);
     }
     
-    // Read file buffer and pass to the service
+    console.log(`📊 Reading file: ${filePath}`);
     const buffer = fs.readFileSync(filePath);
-    const result = await importFoodsFromBuffer(buffer);
     
-    // Display results
-    console.log('\n🎉 Import complete!');
-    console.log(`⏱️ Total time       : ${result.summary.durationSeconds} seconds`);
-    console.log(`📋 Total rows       : ${result.summary.total}`);
-    console.log(`✅ Valid rows       : ${result.summary.valid}`);
-    console.log(`📥 Inserted         : ${result.summary.inserted}`);
-    console.log(`🔄 Skipped duplicates: ${result.summary.skipped}`);
-    console.log(`❌ Errors           : ${result.summary.errors}`);
+    // Set up progress updates for console
+    console.log('🔄 Starting import process...');
     
-    // Write logs to file
-    const logPath = path.join(__dirname, '../data/food-import-log.json');
-    fs.writeFileSync(logPath, JSON.stringify(result, null, 2));
-    console.log(`📝 Detailed log saved to ${logPath}`);
+    const result = await importFoodsFromBuffer(buffer, {
+      updateProgress: (progress) => {
+        process.stdout.write(`\r⏳ Progress: ${progress.toFixed(0)}%`);
+      }
+    });
     
-    if (result.errorDetails && result.errorDetails.length > 0) {
-      const errorLogPath = path.join(__dirname, '../data/food-import-errors.json');
-      fs.writeFileSync(errorLogPath, JSON.stringify(result.errorDetails, null, 2));
-      console.warn(`⚠️ Error details written to ${errorLogPath}`);
+    // Clear progress line
+    process.stdout.write('\r                      \r');
+    
+    if (result.success) {
+      console.log('✅ Import completed successfully!');
+      console.log(`   Valid items: ${result.validCount}`);
+      console.log(`   Inserted: ${result.insertedCount}`);
+      console.log(`   Skipped (duplicates): ${result.skippedCount}`);
+      console.log(`   Errors: ${result.errorCount}`);
+      console.log(`   Duration: ${result.durationSeconds.toFixed(2)}s`);
+      
+      if (result.errorCount > 0 && result.errorDetails) {
+        console.log('');
+        console.log('⚠️ There were some errors during import');
+        console.log('Writing error details to import-errors.json');
+        fs.writeFileSync('import-errors.json', JSON.stringify(result.errorDetails, null, 2));
+      }
+    } else {
+      console.error('❌ Import failed');
+      console.error(`Error: ${result.errorMessage}`);
+      
+      if (result.errorDetails && result.errorDetails.length > 0) {
+        console.log('');
+        console.log('Error details written to import-errors.json');
+        fs.writeFileSync('import-errors.json', JSON.stringify(result.errorDetails, null, 2));
+      }
+      
+      process.exit(1);
     }
-    
   } catch (err) {
-    console.error('❌ Fatal import error:', err);
+    console.error('❌ Fatal error:', err);
     process.exit(1);
   }
 }
 
-// Run the import function
-importFoods()
-  .then(() => process.exit(0))
-  .catch(err => {
-    console.error('Fatal error during import:', err);
-    process.exit(1);
-  });
+// Run the import process
+importFoods();
