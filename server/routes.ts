@@ -16,6 +16,7 @@ import path from "path";
 import { or, eq, and, asc, desc } from "drizzle-orm";
 import nutritionRoutes from './routes/nutrition';
 import publicNutritionRoutes from './routes/publicNutrition';
+import trainerRoutes from './routes/trainer';
 
 // Session type setup for TypeScript
 declare module 'express-session' {
@@ -1138,6 +1139,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register standard nutrition routes (require authentication)
   app.use('/api/nutrition', nutritionRoutes);
+  
+  // Register trainer routes (require authentication)
+  app.use('/api/trainer', isAuthenticated, trainerRoutes);
 
   // Create HTTP server
   const httpServer = createServer(app);

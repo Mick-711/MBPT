@@ -229,6 +229,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.clientProfiles.userId, userId));
     return profile;
   }
+  
+  async getClientProfileById(id: number): Promise<(ClientProfile & { user: User }) | undefined> {
+    const [result] = await db
+      .select({
+        id: schema.clientProfiles.id,
+        userId: schema.clientProfiles.userId,
+        trainerId: schema.clientProfiles.trainerId,
+        height: schema.clientProfiles.height,
+        weight: schema.clientProfiles.weight,
+        goals: schema.clientProfiles.goals,
+        healthInfo: schema.clientProfiles.healthInfo,
+        notes: schema.clientProfiles.notes,
+        user: schema.users
+      })
+      .from(schema.clientProfiles)
+      .where(eq(schema.clientProfiles.id, id))
+      .leftJoin(schema.users, eq(schema.clientProfiles.userId, schema.users.id));
+    
+    return result;
+  }
+  
+  async getAllClients(): Promise<(ClientProfile & { user: User })[]> {
+    return db
+      .select({
+        id: schema.clientProfiles.id,
+        userId: schema.clientProfiles.userId,
+        trainerId: schema.clientProfiles.trainerId,
+        height: schema.clientProfiles.height,
+        weight: schema.clientProfiles.weight,
+        goals: schema.clientProfiles.goals,
+        healthInfo: schema.clientProfiles.healthInfo,
+        notes: schema.clientProfiles.notes,
+        user: schema.users
+      })
+      .from(schema.clientProfiles)
+      .leftJoin(schema.users, eq(schema.clientProfiles.userId, schema.users.id));
+  }
 
   async createClientProfile(profile: InsertClientProfile): Promise<ClientProfile> {
     const [createdProfile] = await db
