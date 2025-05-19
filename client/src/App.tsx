@@ -16,9 +16,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import ClientsList from "@/pages/clients/index";
-import NewClient from "@/pages/clients/new";
-import ClientDetails from "@/pages/clients/client-details";
+// Client management imports
 import WorkoutsList from "@/pages/workouts/index";
 import CreateWorkout from "@/pages/workouts/create";
 import ViewSwitcher from "@/pages/view-switcher";
@@ -171,9 +169,26 @@ function Router() {
       {/* Trainer routes */}
       <Route path="/trainer/dashboard" component={Dashboard} />
       <Route path="/trainer" component={Dashboard} />
-      <Route path="/clients" component={ClientsList} />
-      <Route path="/clients/new" component={NewClient} />
-      <Route path="/clients/:id" component={ClientDetails} />
+      
+      {/* Client Management System routes */}
+      <Route path="/clients">
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        }>
+          {React.createElement(React.lazy(() => import('./pages/clients')))}
+        </Suspense>
+      </Route>
+      <Route path="/clients/:id">
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        }>
+          {React.createElement(React.lazy(() => import('./pages/clients/[id]')))}
+        </Suspense>
+      </Route>
       <Route path="/workouts" component={WorkoutsList} />
       <Route path="/workouts/create" component={CreateWorkout} />
       
