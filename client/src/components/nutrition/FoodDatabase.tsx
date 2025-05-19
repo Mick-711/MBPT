@@ -21,7 +21,21 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { foodCategoryEnum } from '@shared/schema';
+// Import food categories
+const foodCategoryEnum = {
+  enumValues: [
+    'protein',
+    'carbs',
+    'fat',
+    'vegetable',
+    'fruit',
+    'dairy',
+    'beverage',
+    'snack',
+    'supplement',
+    'other'
+  ]
+};
 
 const categories = ['all', ...(Object.values(foodCategoryEnum.enumValues) as string[])];
 
