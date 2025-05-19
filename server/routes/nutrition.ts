@@ -18,7 +18,15 @@ const upload = multer({
 });
 
 // GET /api/nutrition/foods - Get foods with filtering, sorting, and pagination
-router.get('/foods', async (req: Request, res: Response) => {
+// Public access endpoint - no authentication required
+router.get('/foods', (req: Request, res: Response, next) => {
+  // Skip authentication for this public endpoint
+  if (!req.isAuthenticated()) {
+    // Continue even if not authenticated - public access
+    return next();
+  }
+  return next();
+}, async (req: Request, res: Response) => {
   try {
     // parse & normalize query-params
     const {

@@ -61,7 +61,7 @@ export function FoodDatabase() {
     queryKey: ['foods', { category, search, page }],
     queryFn: async () =>
       fetch(
-        `/api/nutrition/foods?` +
+        `/api/public/nutrition/foods?` +
         new URLSearchParams({
           category,
           search,

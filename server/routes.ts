@@ -15,6 +15,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import path from "path";
 import { or, eq, and, asc, desc } from "drizzle-orm";
 import nutritionRoutes from './routes/nutrition';
+import publicNutritionRoutes from './routes/publicNutrition';
 
 // Session type setup for TypeScript
 declare module 'express-session' {
@@ -1127,8 +1128,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register nutrition routes first, BEFORE authentication middleware applies
-  // This ensures food database can be accessed without authentication
+  // Register public nutrition routes that don't require authentication
+  app.use('/api/public/nutrition', publicNutritionRoutes);
+  
+  // Register standard nutrition routes (require authentication)
   app.use('/api/nutrition', nutritionRoutes);
 
   // Create HTTP server
