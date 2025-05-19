@@ -1142,6 +1142,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register standard nutrition routes (require authentication)
   app.use('/api/nutrition', nutritionRoutes);
   
+  // Register user and client routes
+  app.use('/api/users', userRoutes);
+  app.use('/api/clients', clientRoutes);
+  
   // Register trainer routes (require authentication)
   app.use('/api/trainer', isAuthenticated, trainerRoutes);
 

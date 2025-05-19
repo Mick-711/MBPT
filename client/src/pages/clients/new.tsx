@@ -82,10 +82,7 @@ export default function NewClientPage() {
         role: 'client',
       };
 
-      const userResponse = await apiRequest('/api/users', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
+      const userResponse = await apiRequest('/api/users', 'POST', JSON.stringify(userData));
 
       if (!userResponse.ok) {
         const error = await userResponse.json();
@@ -106,10 +103,7 @@ export default function NewClientPage() {
         joinedDate: new Date().toISOString(),
       };
 
-      const clientResponse = await apiRequest('/api/clients', {
-        method: 'POST',
-        body: JSON.stringify(clientData),
-      });
+      const clientResponse = await apiRequest('/api/clients', 'POST', JSON.stringify(clientData));
 
       if (!clientResponse.ok) {
         const error = await clientResponse.json();
