@@ -23,14 +23,6 @@ export interface IStorage {
   updateUserStripeInfo(id: number, data: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
   getUsers(role?: string): Promise<User[]>;
   
-  // Food operations
-  getFoods(options?: { category?: string, query?: string, isPublic?: boolean, userId?: number }): Promise<Food[]>;
-  getFood(id: number): Promise<Food | undefined>;
-  createFood(food: InsertFood): Promise<Food>;
-  createFoodsBatch(foods: InsertFood[]): Promise<Food[]>;
-  updateFood(id: number, data: Partial<Food>): Promise<Food>;
-  deleteFood(id: number): Promise<void>;
-  
   // Trainer operations
   getTrainerProfile(userId: number): Promise<TrainerProfile | undefined>;
   createTrainerProfile(profile: InsertTrainerProfile): Promise<TrainerProfile>;
@@ -154,71 +146,6 @@ import {
 } from "@shared/schema";
 
 export class DatabaseStorage implements IStorage {
-  // Food operations
-  async getFoods(options?: { category?: string, query?: string, isPublic?: boolean, userId?: number }): Promise<Food[]> {
-    let query = db.select().from(schema.foods);
-    
-    if (options?.category) {
-      query = query.where(eq(schema.foods.category, options.category as any));
-    }
-    
-    if (options?.query) {
-      query = query.where(like(schema.foods.name, `%${options.query}%`));
-    }
-    
-    if (options?.isPublic !== undefined) {
-      query = query.where(eq(schema.foods.isPublic, options.isPublic));
-    }
-    
-    if (options?.userId) {
-      query = query.where(or(
-        eq(schema.foods.isPublic, true),
-        eq(schema.foods.createdBy, options.userId)
-      ));
-    }
-    
-    return await query.orderBy(asc(schema.foods.name));
-  }
-  
-  async getFood(id: number): Promise<Food | undefined> {
-    const [food] = await db.select().from(schema.foods).where(eq(schema.foods.id, id));
-    return food;
-  }
-  
-  async createFood(food: InsertFood): Promise<Food> {
-    const [newFood] = await db.insert(schema.foods).values(food).returning();
-    return newFood;
-  }
-  
-  async createFoodsBatch(foodsArray: InsertFood[]): Promise<Food[]> {
-    // Map string categories to enum values
-    const processedFoods = foodsArray.map(food => {
-      // Handle the category to ensure it's a valid enum value
-      if (typeof food.category === 'string') {
-        const validCategories = ['protein', 'carbs', 'fat', 'vegetable', 'fruit', 'dairy', 'nuts', 'seeds', 'grains', 'other'];
-        food.category = validCategories.includes(food.category) ? food.category as any : 'other';
-      }
-      return food;
-    });
-    
-    // Batch insert foods
-    const insertedFoods = await db.insert(schema.foods).values(processedFoods).returning();
-    return insertedFoods;
-  }
-  
-  async updateFood(id: number, data: Partial<Food>): Promise<Food> {
-    const [updatedFood] = await db
-      .update(schema.foods)
-      .set(data)
-      .where(eq(schema.foods.id, id))
-      .returning();
-    return updatedFood;
-  }
-  
-  async deleteFood(id: number): Promise<void> {
-    await db.delete(schema.foods).where(eq(schema.foods.id, id));
-  }
-  
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));

@@ -155,13 +155,25 @@ export default function FoodDatabasePage() {
       </div>
       
       <div className="ml-auto flex gap-2">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/nutrition/food-database/nuttab-import')}
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Import from NUTTAB
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80">
+            <div className="space-y-4">
+              <h4 className="font-medium">Import Foods</h4>
+              <p className="text-sm text-muted-foreground">
+                Import foods from a CSV or JSON file to add to your database.
+              </p>
+              <div className="flex justify-end">
+                <Button size="sm">Upload File</Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         
         <Button variant="outline">
           <Download className="h-4 w-4 mr-2" />
