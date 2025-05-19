@@ -100,35 +100,44 @@ export async function importFoodsFromBuffer(
   } = {}
 ): Promise<ImportFoodResult> {
   const startTime = Date.now();
-  const batchSize = options.batchSize || DEFAULT_BATCH_SIZE;
-  const jobId = options.jobId;
   
-  // Function to update progress if jobId is provided
-  const updateProgress = (progress: number) => {
+  // Destructure options at the top with defaults
+  const { 
+    batchSize = DEFAULT_BATCH_SIZE, 
+    dryRun = false, 
+    jobId, 
+    updateProgress 
+  } = options;
+  
+  // Create non-shadowed progress reporter
+  const reportProgress = (pct: number) => {
     if (jobId && importJobs.has(jobId)) {
       const job = importJobs.get(jobId)!;
-      job.progress = progress;
+      job.progress = pct;
       importJobs.set(jobId, job);
     }
-    if (options.updateProgress) {
-      options.updateProgress(progress);
+    if (updateProgress) {
+      updateProgress(pct);
     }
   };
   
+  // Report initial progress
+  reportProgress(0);
+  
   try {
     // Read workbook from buffer
-    updateProgress(10);
+    reportProgress(10);
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawRows = XLSX.utils.sheet_to_json<unknown>(sheet);
     
     // Check for existing foods to avoid duplicates
-    updateProgress(20);
+    reportProgress(20);
     const existingFoods = await db.select({ name: foods.name }).from(foods);
     const existingFoodNames = new Set(existingFoods.map(f => f.name.toLowerCase().trim()));
     
     // Validate & transform all rows
-    updateProgress(30);
+    reportProgress(30);
     const validRows: InsertFood[] = [];
     const skippedDuplicates: string[] = [];
     const errors: ImportFoodResult['errorDetails'] = [];
@@ -179,11 +188,12 @@ export async function importFoodsFromBuffer(
     // If dryRun, don't actually insert the data
     let inserted = 0;
     
-    if (!options.dryRun) {
-      updateProgress(50);
+    if (!dryRun) {
+      reportProgress(50);
       
       // Batch insert in transactions
       const batchCount = Math.ceil(validRows.length / batchSize);
+      const totalRows = validRows.length;
       
       for (let i = 0; i < validRows.length; i += batchSize) {
         const batch = validRows.slice(i, i + batchSize);
@@ -203,13 +213,16 @@ export async function importFoodsFromBuffer(
           console.error(`Error in batch ${batchIndex + 1}:`, err instanceof Error ? err.message : err);
         }
         
-        // Update progress during batch processing
-        const progressIncrement = 50 / batchCount;
-        updateProgress(50 + Math.min(50, progressIncrement * (batchIndex + 1)));
+        // Update progress after each batch with more granular reporting
+        const currentProgress = Math.round(50 + ((i + batch.length) / totalRows * 50));
+        reportProgress(Math.min(99, currentProgress)); // Cap at 99% until complete
       }
+      
+      // Mark as 100% complete after all batches
+      reportProgress(100);
     } else {
       // For dry runs, mark as 100% complete
-      updateProgress(100);
+      reportProgress(100);
     }
     
     // Calculate duration
