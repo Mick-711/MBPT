@@ -1,178 +1,177 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
-// Define the form schema using Zod
-const clientFormSchema = z.object({
-  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  goals: z.string().optional(),
-  healthInfo: z.string().optional(),
-  notes: z.string().optional(),
+// Step 1: Account Information Form Schema
+const accountFormSchema = z.object({
+  fullName: z.string().min(2, 'Full name must be at least 2 characters.'),
+  email: z.string().email('Please enter a valid email address.'),
+  username: z.string().min(3, 'Username must be at least 3 characters.').max(20, 'Username must be less than 20 characters.'),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
 
-type ClientFormValues = z.infer<typeof clientFormSchema>;
+// Step 2: Profile Information Form Schema
+const profileFormSchema = z.object({
+  height: z.coerce.number().min(0).max(300).optional().nullable(),
+  weight: z.coerce.number().min(0).max(500).optional().nullable(),
+  goals: z.string().max(500, 'Goals must be less than 500 characters.').optional().nullable(),
+  healthInfo: z.string().max(1000, 'Health information must be less than 1000 characters.').optional().nullable(),
+  notes: z.string().max(1000, 'Notes must be less than 1000 characters.').optional().nullable(),
+});
 
 export default function NewClientPage() {
+  const [step, setStep] = useState(1);
+  const [userId, setUserId] = useState<number | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 2;
 
-  // Initialize form with default values
-  const form = useForm<ClientFormValues>({
-    resolver: zodResolver(clientFormSchema),
+  // Step 1: Account Information Form
+  const accountForm = useForm<z.infer<typeof accountFormSchema>>({
+    resolver: zodResolver(accountFormSchema),
     defaultValues: {
       fullName: '',
       email: '',
       username: '',
       password: '',
-      height: '',
-      weight: '',
-      dateOfBirth: '',
-      goals: '',
-      healthInfo: '',
-      notes: '',
     },
   });
 
-  // Set up the mutation for creating a client
-  const createClientMutation = useMutation({
-    mutationFn: async (data: ClientFormValues) => {
-      // First create the user
+  // Step 2: Profile Information Form
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      height: null,
+      weight: null,
+      goals: null,
+      healthInfo: null,
+      notes: null,
+    },
+  });
+
+  // Create user mutation (Step 1)
+  const createUserMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof accountFormSchema>) => {
       const userData = {
-        fullName: data.fullName,
-        email: data.email,
-        username: data.username,
-        password: data.password,
-        role: 'client',
+        ...data,
+        role: 'client', // Set role to client by default
       };
-
-      const userResponse = await apiRequest('/api/users', 'POST', JSON.stringify(userData));
-
-      if (!userResponse.ok) {
-        const error = await userResponse.json();
-        throw new Error(error.message || 'Failed to create user');
-      }
-
-      const user = await userResponse.json();
-
-      // Then create the client profile
-      const clientData = {
-        userId: user.id,
-        height: data.height ? parseFloat(data.height) : null,
-        weight: data.weight ? parseFloat(data.weight) : null,
-        dateOfBirth: data.dateOfBirth || null,
-        goals: data.goals || null,
-        healthInfo: data.healthInfo || null,
-        notes: data.notes || null,
-        joinedDate: new Date().toISOString(),
-      };
-
-      const clientResponse = await apiRequest('/api/clients', 'POST', JSON.stringify(clientData));
-
-      if (!clientResponse.ok) {
-        const error = await clientResponse.json();
-        throw new Error(error.message || 'Failed to create client profile');
-      }
-
-      return await clientResponse.json();
+      
+      return apiRequest('/api/users', {
+        method: 'POST',
+        data: userData,
+      });
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/trainer/clients'] });
+      setUserId(data.id);
+      setStep(2); // Move to next step
       toast({
-        title: 'Success!',
-        description: 'Client was successfully created.',
+        title: 'Account created',
+        description: 'Client account information saved successfully.',
       });
-      // Navigate to the new client's profile page
-      navigate(`/clients/${data.id}`);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Something went wrong. Please try again.',
+        description: error.message || 'Failed to create client account.',
         variant: 'destructive',
       });
     },
   });
 
-  // Handle form submission
-  const onSubmit = async (data: ClientFormValues) => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      createClientMutation.mutate(data);
-    }
+  // Create client profile mutation (Step 2)
+  const createProfileMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof profileFormSchema>) => {
+      if (!userId) throw new Error('User ID is missing');
+      
+      const profileData = {
+        ...data,
+        userId,
+        joinedDate: new Date(),
+      };
+      
+      return apiRequest('/api/clients', {
+        method: 'POST',
+        data: profileData,
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Client created',
+        description: 'New client added successfully.',
+      });
+      navigate(`/clients/${data.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create client profile.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handle form submissions
+  const onSubmitAccountForm = (data: z.infer<typeof accountFormSchema>) => {
+    createUserMutation.mutate(data);
   };
 
-  // Handle back button in multi-step form
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  const onSubmitProfileForm = (data: z.infer<typeof profileFormSchema>) => {
+    createProfileMutation.mutate(data);
   };
 
   return (
     <div className="container p-6">
-      <PageHeader 
-        heading="Add New Client" 
+      <div className="mb-4">
+        <Link href="/clients">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Clients
+          </Button>
+        </Link>
+      </div>
+
+      <PageHeader
+        heading="Add New Client"
         text="Create a new client account and profile."
       />
 
-      <Link href="/clients">
-        <Button variant="ghost" size="sm" className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Clients
-        </Button>
-      </Link>
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>
+              {step === 1 ? 'Step 1: Account Information' : 'Step 2: Profile Information'}
+            </CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Step {step} of 2
+            </div>
+          </div>
+          <CardDescription>
+            {step === 1
+              ? 'Enter the client\'s basic account information.'
+              : 'Enter additional profile details for the client.'}
+          </CardDescription>
+        </CardHeader>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {currentStep === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>
-                  Create the client's account details. They'll use these credentials to log in.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        <CardContent>
+          {step === 1 ? (
+            <Form {...accountForm}>
+              <form onSubmit={accountForm.handleSubmit(onSubmitAccountForm)} className="space-y-6">
                 <FormField
-                  control={form.control}
+                  control={accountForm.control}
                   name="fullName"
                   render={({ field }) => (
                     <FormItem>
@@ -180,26 +179,34 @@ export default function NewClientPage() {
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Client's full name as it will appear in the system.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
-                  control={form.control}
+                  control={accountForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="johndoe@example.com" type="email" {...field} />
+                        <Input placeholder="client@example.com" type="email" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Client's email for login and communications.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="grid gap-4 md:grid-cols-2">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    control={form.control}
+                    control={accountForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -207,76 +214,104 @@ export default function NewClientPage() {
                         <FormControl>
                           <Input placeholder="johndoe" {...field} />
                         </FormControl>
+                        <FormDescription>
+                          Client's unique username for logging in.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
-                    control={form.control}
+                    control={accountForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input placeholder="•••••••••" type="password" {...field} />
+                          <Input placeholder="••••••••" type="password" {...field} />
                         </FormControl>
+                        <FormDescription>
+                          Temporary password (client can change later).
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button type="submit">Next Step</Button>
-              </CardFooter>
-            </Card>
-          )}
 
-          {currentStep === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  Add details about the client's physical stats and goals. These are optional and can be updated later.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="flex justify-end">
+                  <Button 
+                    type="submit" 
+                    className="gap-2"
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      <>
+                        Next Step
+                        <ChevronRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onSubmitProfileForm)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    control={form.control}
+                    control={profileForm.control}
                     name="height"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Height (cm)</FormLabel>
                         <FormControl>
-                          <Input placeholder="178" type="number" {...field} />
+                          <Input
+                            type="number"
+                            placeholder="175"
+                            {...field}
+                            value={field.value === null ? '' : field.value}
+                            onChange={e => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value);
+                              field.onChange(value);
+                            }}
+                          />
                         </FormControl>
+                        <FormDescription>
+                          Client's height in centimeters.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
-                    control={form.control}
+                    control={profileForm.control}
                     name="weight"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Weight (kg)</FormLabel>
                         <FormControl>
-                          <Input placeholder="75" type="number" {...field} />
+                          <Input
+                            type="number"
+                            placeholder="70"
+                            {...field}
+                            value={field.value === null ? '' : field.value}
+                            onChange={e => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value);
+                              field.onChange(value);
+                            }}
+                          />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
+                        <FormDescription>
+                          Client's weight in kilograms.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -284,81 +319,96 @@ export default function NewClientPage() {
                 </div>
 
                 <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="goals"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fitness Goals</FormLabel>
+                      <FormLabel>Goals</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="E.g., lose weight, build muscle, improve endurance" 
-                          className="min-h-[80px]"
-                          {...field} 
+                        <Textarea
+                          placeholder="Build muscle, lose weight, improve endurance..."
+                          {...field}
+                          value={field.value || ''}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Client's fitness and health goals.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="healthInfo"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Health Information</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Any medical conditions, injuries, or allergies" 
-                          className="min-h-[80px]"
-                          {...field} 
+                        <Textarea
+                          placeholder="Any health conditions, restrictions, or important medical information..."
+                          {...field}
+                          value={field.value || ''}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Important health information and restrictions.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Additional Notes</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Any other relevant information about this client" 
-                          className="min-h-[80px]"
-                          {...field} 
+                        <Textarea
+                          placeholder="Any additional notes or information about the client..."
+                          {...field}
+                          value={field.value || ''}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Any other relevant information about the client.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button type="button" variant="outline" onClick={handleBack}>
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createClientMutation.isPending}
-                >
-                  {createClientMutation.isPending ? (
-                    <>
-                      <span className="animate-spin mr-2">⟳</span>
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Client'
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
+
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                  >
+                    Back to Account Info
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="gap-2"
+                    disabled={createProfileMutation.isPending}
+                  >
+                    {createProfileMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating Client...
+                      </>
+                    ) : (
+                      'Create Client'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
-        </form>
-      </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

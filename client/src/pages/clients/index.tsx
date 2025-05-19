@@ -160,7 +160,7 @@ export default function ClientsPage() {
             <Link href="/clients/new">
               <Button className="gap-2">
                 <UserPlus className="h-4 w-4" />
-                Add Your First Client
+                Add Client
               </Button>
             </Link>
           </CardContent>
