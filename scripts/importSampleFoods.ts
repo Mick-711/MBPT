@@ -39,11 +39,10 @@ async function importSampleFoods() {
         updatedAt: new Date()
       }));
       
-      // Insert all foods
+      // Insert all foods - without using onConflict since we don't have a unique constraint
       const result = await db
         .insert(foods)
-        .values(foodsWithTimestamp)
-        .onConflictDoNothing({ target: foods.name });
+        .values(foodsWithTimestamp);
       
       inserted = Number(result.rowCount);
       skipped = sampleData.length - inserted;

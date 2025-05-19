@@ -1127,11 +1127,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register nutrition routes with PUBLIC access - no auth required
-  app.use('/api/nutrition', (req, res, next) => {
-    // Skip authentication for nutrition routes
-    next();
-  }, nutritionRoutes);
+  // Register nutrition routes first, BEFORE authentication middleware applies
+  // This ensures food database can be accessed without authentication
+  app.use('/api/nutrition', nutritionRoutes);
 
   // Create HTTP server
   const httpServer = createServer(app);
