@@ -1,5 +1,5 @@
 // client/src/components/nutrition/FoodDatabase.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -88,7 +88,7 @@ export function FoodDatabase() {
   } | null>(null);
 
   // Check import job status
-  useQuery({
+  const importJobQuery = useQuery({
     queryKey: ['importJob', importJobId],
     queryFn: async () => {
       if (!importJobId) return null;
@@ -100,25 +100,27 @@ export function FoodDatabase() {
     },
     enabled: !!importJobId && (importStatus?.status === 'pending' || importStatus?.status === 'processing'),
     refetchInterval: 1000, // Poll every second while job is active
-    onSuccess: (data) => {
-      if (data) {
-        setImportStatus(data);
-        if (data.status === 'completed') {
-          toast({
-            title: "Import completed",
-            description: `Successfully imported ${data.insertedCount} food items.`,
-          });
-          queryClient.invalidateQueries({ queryKey: ['foods'] });
-        } else if (data.status === 'failed') {
-          toast({
-            variant: "destructive",
-            title: "Import failed",
-            description: data.errorMessage || "Unknown error occurred",
-          });
-        }
-      }
-    },
   });
+  
+  // Handle successful response using useEffect
+  useEffect(() => {
+    if (importJobQuery.data) {
+      setImportStatus(importJobQuery.data);
+      if (importJobQuery.data.status === 'completed') {
+        toast({
+          title: "Import completed",
+          description: `Successfully imported ${importJobQuery.data.insertedCount} food items.`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['foods'] });
+      } else if (importJobQuery.data.status === 'failed') {
+        toast({
+          variant: "destructive",
+          title: "Import failed",
+          description: importJobQuery.data.errorMessage || "Unknown error occurred",
+        });
+      }
+    }
+  }, [importJobQuery.data, queryClient, toast]);
 
   // Mutation to upload file for import
   const importMutation = useMutation({
