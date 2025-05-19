@@ -22,11 +22,8 @@ declare module 'express-session' {
   }
 }
 
-import importRoutes from './routes/import';
-
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Import routes for data import
-  app.use('/api/import', importRoutes);
+  // We'll add food import routes directly in this file
   // Session setup
   app.use(
     session({

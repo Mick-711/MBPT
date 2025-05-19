@@ -1,0 +1,58 @@
+import { Router } from 'express';
+import fetch from 'node-fetch';
+import { importFoodsFromBuffer, ImportFoodResult } from '../services/importFoodService';
+import { isAuthenticated, isTrainer } from '../authMiddleware';
+import { randomUUID } from 'crypto';
+
+export const router = Router();
+
+// In-memory progress (swap out for Redis if you need persistence)
+const importJobs = new Map<string, ImportFoodResult & { status: string; progress: number }>();
+
+// Kick off import by URL
+router.post(
+  '/admin/foods/import',
+  isAuthenticated, isTrainer,
+  async (req, res) => {
+    const { fileUrl } = req.body;
+    if (typeof fileUrl !== 'string') {
+      return res.status(400).json({ error: 'fileUrl is required' });
+    }
+
+    const jobId = randomUUID();
+    importJobs.set(jobId, { status: 'processing', progress: 0, validCount:0, insertedCount:0, errorCount:0, errorDetails:[] });
+
+    // Fire and forget
+    (async () => {
+      try {
+        const resp = await fetch(fileUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const buffer = Buffer.from(await resp.arrayBuffer());
+
+        // Do a dry run first if you want, or go straight to real import:
+        const summary = await importFoodsFromBuffer(buffer, { batchSize: 200 });
+        importJobs.set(jobId, { ...summary, status: 'completed', progress: 100 });
+      } catch (err: any) {
+        importJobs.set(jobId, {
+          status: 'failed',
+          progress: 0,
+          validCount:0, insertedCount:0, errorCount:1,
+          errorDetails: [{ row: 0, issues: [{ message: err.message, path: [] }] }],
+        });
+      }
+    })();
+
+    return res.json({ jobId });
+  }
+);
+
+// Poll for status
+router.get(
+  '/admin/foods/import/:jobId/status',
+  isAuthenticated, isTrainer,
+  (req, res) => {
+    const job = importJobs.get(req.params.jobId);
+    if (!job) return res.status(404).json({ error: 'Not found' });
+    return res.json({ jobId: req.params.jobId, ...job });
+  }
+);

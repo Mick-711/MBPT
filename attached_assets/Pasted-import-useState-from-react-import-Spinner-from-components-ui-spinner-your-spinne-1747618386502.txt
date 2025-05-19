@@ -1,0 +1,63 @@
+import { useState } from 'react';
+import { Spinner } from '@/components/ui/spinner'; // your spinner
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+
+export function FoodImport() {
+  const [fileUrl, setFileUrl] = useState('');
+  const [jobId, setJobId]   = useState<string>();
+  const [status, setStatus] = useState<string>();
+  const [progress, setProgress] = useState<number>(0);
+  const [summary, setSummary]   = useState<any>();
+
+  async function startImport() {
+    const resp = await fetch('/admin/foods/import', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ fileUrl }),
+    });
+    const { jobId } = await resp.json();
+    setJobId(jobId);
+    pollStatus(jobId);
+  }
+
+  async function pollStatus(id: string) {
+    const res = await fetch(`/admin/foods/import/${id}/status`);
+    const json = await res.json();
+    setStatus(json.status);
+    setProgress(json.progress);
+    if (json.status === 'processing') {
+      setTimeout(() => pollStatus(id), 1000);
+    } else {
+      setSummary(json);
+    }
+  }
+
+  return (
+    <div className="space-y-4 p-4 border rounded-lg bg-white">
+      <h2 className="text-xl font-bold">Import Foods from Excel</h2>
+      <Input
+        value={fileUrl}
+        placeholder="Paste public .xlsx URL"
+        onChange={(e) => setFileUrl(e.currentTarget.value)}
+      />
+      <Button onClick={startImport} disabled={!fileUrl || jobId}>
+        {jobId ? 'Importing…' : 'Start Import'}
+      </Button>
+
+      {jobId && (
+        <div className="space-y-2">
+          <div className="flex items-center">
+            <Spinner size="sm" />{' '}
+            <span className="ml-2">Status: {status} ({progress}%)</span>
+          </div>
+          {status !== 'processing' && summary && (
+            <pre className="bg-gray-100 p-2 rounded overflow-auto text-sm">
+              {JSON.stringify(summary, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

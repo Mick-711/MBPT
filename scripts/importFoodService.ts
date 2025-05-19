@@ -40,20 +40,19 @@ const FoodRowSchema = z.object({
 // ────────────────────────────────────────────────────────────────────────────────
 // 2) Helpers & constants
 // ────────────────────────────────────────────────────────────────────────────────
-const BATCH_SIZE = 100;
-const validCategories = new Set(
-  Object.values(foodCategoryEnum.enumValues)
-);
+const DEFAULT_BATCH_SIZE = 100;
+
+// Create a mapping of lowercase category names to their proper cased values
+const validCategoriesMap = Object.values(foodCategoryEnum.enumValues)
+  .reduce((map, cat) => ({ 
+    ...map, 
+    [cat.toLowerCase()]: cat 
+  }), {} as Record<string, typeof foodCategoryEnum.enumValues[keyof typeof foodCategoryEnum.enumValues]>);
 
 function normalizeCategory(cat?: string): typeof foodCategoryEnum.enumValues[keyof typeof foodCategoryEnum.enumValues] {
   if (!cat) return 'other';
   const key = cat.toString().toLowerCase();
-  // First check if the key exists directly
-  if (validCategories.has(key)) {
-    return key as typeof foodCategoryEnum.enumValues[keyof typeof foodCategoryEnum.enumValues];
-  }
-  // If not, return 'other' as a fallback
-  return 'other';
+  return validCategoriesMap[key] || 'other';
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -61,39 +60,78 @@ function normalizeCategory(cat?: string): typeof foodCategoryEnum.enumValues[key
 // ────────────────────────────────────────────────────────────────────────────────
 export interface ImportFoodResult {
   success: boolean;
-  summary: {
-    total: number;
-    valid: number;
-    inserted: number;
-    skipped: number;
-    errors: number;
-    durationSeconds: number;
-  };
-  errorDetails?: any[];
+  validCount: number;
+  insertedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  durationSeconds: number;
+  errorDetails?: Array<{ 
+    row: number; 
+    issues: z.ZodIssue[] | string | Array<{ message: string; path: string[] }> 
+  }>;
   errorMessage?: string;
 }
+
+// For tracking job progress
+export interface ImportJobStatus extends ImportFoodResult {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number; // 0-100
+}
+
+// In-memory store for import jobs
+export const importJobs = new Map<string, ImportJobStatus>();
 
 /**
  * Process and import food data from a buffer (XLSX file)
  * Used by both CLI script and API endpoint
+ * 
+ * @param buffer The Excel file as buffer
+ * @param options Options for the import process
+ * @returns Import results
  */
-export async function importFoodsFromBuffer(buffer: Buffer): Promise<ImportFoodResult> {
+export async function importFoodsFromBuffer(
+  buffer: Buffer, 
+  options: { 
+    batchSize?: number; 
+    dryRun?: boolean;
+    jobId?: string;
+    updateProgress?: (progress: number) => void;
+  } = {}
+): Promise<ImportFoodResult> {
   const startTime = Date.now();
+  const batchSize = options.batchSize || DEFAULT_BATCH_SIZE;
+  const jobId = options.jobId;
+  
+  // Function to update progress if jobId is provided
+  const updateProgress = (progress: number) => {
+    if (jobId && importJobs.has(jobId)) {
+      const job = importJobs.get(jobId)!;
+      job.progress = progress;
+      importJobs.set(jobId, job);
+    }
+    if (options.updateProgress) {
+      options.updateProgress(progress);
+    }
+  };
   
   try {
     // Read workbook from buffer
+    updateProgress(10);
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawRows = XLSX.utils.sheet_to_json<unknown>(sheet);
     
     // Check for existing foods to avoid duplicates
+    updateProgress(20);
     const existingFoods = await db.select({ name: foods.name }).from(foods);
     const existingFoodNames = new Set(existingFoods.map(f => f.name.toLowerCase().trim()));
     
     // Validate & transform all rows
+    updateProgress(30);
     const validRows: InsertFood[] = [];
     const skippedDuplicates: string[] = [];
-    const errors: { row: number; issues: z.ZodIssue[] | string }[] = [];
+    const errors: ImportFoodResult['errorDetails'] = [];
     
     rawRows.forEach((raw: any, i) => {
       try {
@@ -138,26 +176,40 @@ export async function importFoodsFromBuffer(buffer: Buffer): Promise<ImportFoodR
       }
     });
     
-    // Batch insert in transactions
+    // If dryRun, don't actually insert the data
     let inserted = 0;
-    const batchCount = Math.ceil(validRows.length / BATCH_SIZE);
     
-    for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-      const batch = validRows.slice(i, i + BATCH_SIZE);
+    if (!options.dryRun) {
+      updateProgress(50);
       
-      try {
-        await db.transaction(async (tx) => {
-          await tx
-            .insert(foods)
-            .values(batch)
-            .onConflictDoNothing({ target: foods.name });
-          
-          inserted += batch.length;
-        });
-      } catch (err) {
-        // Continue with next batch if one fails
-        console.error(`Error in batch:`, err instanceof Error ? err.message : err);
+      // Batch insert in transactions
+      const batchCount = Math.ceil(validRows.length / batchSize);
+      
+      for (let i = 0; i < validRows.length; i += batchSize) {
+        const batch = validRows.slice(i, i + batchSize);
+        const batchIndex = Math.floor(i / batchSize);
+        
+        try {
+          await db.transaction(async (tx) => {
+            const result = await tx
+              .insert(foods)
+              .values(batch)
+              .onConflictDoNothing({ target: foods.name });
+            
+            // Get actual count of inserted rows if available
+            inserted += result.rowCount ?? batch.length;
+          });
+        } catch (err) {
+          console.error(`Error in batch ${batchIndex + 1}:`, err instanceof Error ? err.message : err);
+        }
+        
+        // Update progress during batch processing
+        const progressIncrement = 50 / batchCount;
+        updateProgress(50 + Math.min(50, progressIncrement * (batchIndex + 1)));
       }
+    } else {
+      // For dry runs, mark as 100% complete
+      updateProgress(100);
     }
     
     // Calculate duration
@@ -166,14 +218,11 @@ export async function importFoodsFromBuffer(buffer: Buffer): Promise<ImportFoodR
     // Create result object
     const result: ImportFoodResult = {
       success: true,
-      summary: {
-        total: rawRows.length,
-        valid: validRows.length,
-        inserted,
-        skipped: skippedDuplicates.length,
-        errors: errors.length,
-        durationSeconds
-      }
+      validCount: validRows.length,
+      insertedCount: inserted,
+      skippedCount: skippedDuplicates.length,
+      errorCount: errors.length,
+      durationSeconds
     };
     
     // Add error details if there are any
@@ -186,15 +235,16 @@ export async function importFoodsFromBuffer(buffer: Buffer): Promise<ImportFoodR
   } catch (err) {
     return {
       success: false,
-      summary: {
-        total: 0,
-        valid: 0,
-        inserted: 0,
-        skipped: 0,
-        errors: 1,
-        durationSeconds: Number(((Date.now() - startTime) / 1000).toFixed(2))
-      },
-      errorMessage: err instanceof Error ? err.message : "Unknown error occurred"
+      validCount: 0,
+      insertedCount: 0,
+      skippedCount: 0,
+      errorCount: 1,
+      durationSeconds: Number(((Date.now() - startTime) / 1000).toFixed(2)),
+      errorMessage: err instanceof Error ? err.message : "Unknown error occurred",
+      errorDetails: [{ 
+        row: 0, 
+        issues: [{ message: err instanceof Error ? err.message : "Unknown error", path: [] }] 
+      }]
     };
   }
 }

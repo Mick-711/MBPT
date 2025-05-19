@@ -1,0 +1,86 @@
+import * as XLSX from 'xlsx';
+import { z } from 'zod';
+import { db } from '../db';
+import { foods, InsertFood, foodCategoryEnum } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
+
+// Zod + normalization (as we defined)
+const FoodRowSchema = /* … the same zod schema from importFoods.ts … */;
+
+const validCategoriesMap = Object.values(foodCategoryEnum.enumValues)
+  .reduce((map, cat) => ({ ...map, [cat.toLowerCase()]: cat }), {} as Record<string,string>);
+
+function normalizeCategory(cat?: string): string {
+  if (!cat) return 'other';
+  return validCategoriesMap[cat.toLowerCase()] || 'other';
+}
+
+export interface ImportFoodResult {
+  validCount: number;
+  insertedCount: number;
+  errorCount: number;
+  errorDetails: { row: number; issues: z.ZodIssue[] }[];
+}
+
+export async function importFoodsFromBuffer(
+  buffer: Buffer,
+  options: { batchSize?: number; dryRun?: boolean } = {}
+): Promise<ImportFoodResult> {
+  const batchSize = options.batchSize ?? 100;
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+  const rawRows  = XLSX.utils.sheet_to_json<unknown>(sheet);
+
+  // 1) Validate & transform
+  const validRows: InsertFood[] = [];
+  const errors: ImportFoodResult['errorDetails'] = [];
+
+  rawRows.forEach((raw, i) => {
+    const rowNum = i + 2;
+    const parsed = FoodRowSchema.safeParse(raw);
+    if (!parsed.success) {
+      errors.push({ row: rowNum, issues: parsed.error.issues });
+    } else {
+      const r = parsed.data;
+      validRows.push({
+        name:            r.name.trim(),
+        category:        normalizeCategory(r.category),
+        servingSize:     r.servingSize,
+        servingUnit:     r.servingUnit,
+        calories:        r.calories,
+        protein:         r.protein,
+        carbs:           r.carbs,
+        fat:             r.fat,
+        fiber:           r.fiber,
+        sugar:           r.sugar,
+        sodium:          r.sodium,
+        cholesterol:     r.cholesterol,
+        isPublic:        true,
+        brand:           r.brand ?? null,
+        tags:            r.tags,
+      });
+    }
+  });
+
+  let inserted = 0;
+  if (!options.dryRun) {
+    // 2) Batch‐insert in transactions
+    for (let i = 0; i < validRows.length; i += batchSize) {
+      const batch = validRows.slice(i, i + batchSize);
+      await db.transaction(async (tx) => {
+        const res = await tx
+          .insert(foods)
+          .values(batch)
+          .onConflictDoNothing({ target: foods.name });
+        inserted += res.rowCount ?? batch.length;
+      });
+    }
+  }
+
+  return {
+    validCount:   validRows.length,
+    insertedCount: inserted,
+    errorCount:   errors.length,
+    errorDetails: errors,
+  };
+}
