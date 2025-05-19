@@ -168,7 +168,7 @@ export default function Dashboard() {
                 <Link href="/clients/new">
                   <Button>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Add New Client
+                    Add Client
                   </Button>
                 </Link>
               </div>
@@ -206,17 +206,7 @@ export default function Dashboard() {
                   </div>
                 </Link>
                 
-                <div className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center hover:border-primary hover:bg-primary-50 dark:hover:bg-primary-950/20 transition-all">
-                  <Link href="/clients/new" className="flex flex-col items-center text-center p-4">
-                    <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 mb-2">
-                      <UserPlus className="h-6 w-6" />
-                    </div>
-                    <h3 className="font-medium mt-2">Add New Client</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Create a new client profile
-                    </p>
-                  </Link>
-                </div>
+
               </div>
 
               <div className="flex justify-center mt-6">
