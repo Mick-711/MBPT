@@ -335,3 +335,4 @@ export type ProgressPhoto = typeof progressPhotos.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type ClientActivity = typeof clientActivities.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
+export type Food = typeof foods.$inferSelect;
