@@ -240,6 +240,34 @@ export const clientActivities = pgTable('client_activities', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Food categories enum
+export const foodCategoryEnum = pgEnum('food_category', [
+  'protein', 'carbs', 'fat', 'vegetable', 'fruit', 'dairy', 'beverage', 'snack', 'supplement', 'other'
+]);
+
+// Food table
+export const foods = pgTable('foods', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  category: foodCategoryEnum('category').default('other'),
+  servingSize: doublePrecision('serving_size').notNull().default(100),
+  servingUnit: text('serving_unit').notNull().default('g'),
+  calories: integer('calories').notNull(),
+  protein: doublePrecision('protein').notNull().default(0),
+  carbs: doublePrecision('carbs').notNull().default(0),
+  fat: doublePrecision('fat').notNull().default(0),
+  fiber: doublePrecision('fiber').default(0),
+  sugar: doublePrecision('sugar').default(0),
+  sodium: doublePrecision('sodium').default(0),
+  cholesterol: doublePrecision('cholesterol').default(0),
+  isPublic: boolean('is_public').default(true),
+  trainerId: integer('trainer_id').references(() => users.id),
+  brand: text('brand'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Task
 export const tasks = pgTable('tasks', {
   id: serial('id').primaryKey(),
@@ -271,6 +299,7 @@ export const insertProgressPhotoSchema = createInsertSchema(progressPhotos).omit
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
 export const insertClientActivitySchema = createInsertSchema(clientActivities).omit({ id: true, createdAt: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertFoodSchema = createInsertSchema(foods).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -288,6 +317,7 @@ export type InsertProgressPhoto = z.infer<typeof insertProgressPhotoSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertClientActivity = z.infer<typeof insertClientActivitySchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type InsertFood = z.infer<typeof insertFoodSchema>;
 
 // Select types
 export type User = typeof users.$inferSelect;
