@@ -1,0 +1,124 @@
+// scripts/importFoods.ts
+import * as fs from 'fs';
+import * as path from 'path';
+import * as XLSX from 'xlsx';
+import { z } from 'zod';
+import { db } from '../server/db';
+import { foods, InsertFood, foodCategoryEnum } from '../shared/schema';
+import { eq } from 'drizzle-orm';
+
+// ────────────────────────────────────────────────────────────────────────────────
+// 1) Zod schema for a single row
+// ────────────────────────────────────────────────────────────────────────────────
+const FoodRowSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().optional(),
+  servingSize: z.preprocess(
+    (val) => Number(val ?? 100),
+    z.number().positive()
+  ),
+  servingUnit: z.string().optional().default('g'),
+  calories: z.preprocess(Number, z.number().nonnegative()),
+  protein: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  carbs: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  fat: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  fiber: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  sugar: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  sodium: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  cholesterol: z.preprocess(Number, z.number().nonnegative()).optional().default(0),
+  brand: z.string().optional().nullable(),
+  tags: z
+    .string()
+    .optional()
+    .transform((str) =>
+      str
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    ),
+});
+
+// ────────────────────────────────────────────────────────────────────────────────
+// 2) Helpers & constants
+// ────────────────────────────────────────────────────────────────────────────────
+const BATCH_SIZE = 100;
+const validCategories = new Set(
+  Object.values(foodCategoryEnum.enumValues)
+);
+
+function normalizeCategory(cat?: string) {
+  if (!cat) return 'other';
+  const key = cat.toString().toLowerCase();
+  return validCategories.has(key) ? key : 'other';
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// 3) Main import function
+// ────────────────────────────────────────────────────────────────────────────────
+async function importFoods() {
+  const filePath = path.join(__dirname, '../data/food_items.xlsx');
+  console.log(`📥 Loading Excel file: ${filePath}`);
+  const workbook = XLSX.readFile(filePath);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rawRows = XLSX.utils.sheet_to_json<unknown>(sheet);
+
+  // Validate & transform all rows
+  const validRows: InsertFood[] = [];
+  const errors: { row: number; issues: z.ZodIssue[] }[] = [];
+
+  rawRows.forEach((raw, i) => {
+    const result = FoodRowSchema.safeParse(raw);
+    if (!result.success) {
+      errors.push({ row: i + 2, issues: result.error.issues });
+    } else {
+      const row = result.data;
+      validRows.push({
+        name: row.name.trim(),
+        category: normalizeCategory(row.category),
+        servingSize: row.servingSize,
+        servingUnit: row.servingUnit,
+        calories: row.calories,
+        protein: row.protein,
+        carbs: row.carbs,
+        fat: row.fat,
+        fiber: row.fiber,
+        sugar: row.sugar,
+        sodium: row.sodium,
+        cholesterol: row.cholesterol,
+        isPublic: true,
+        brand: row.brand ?? null,
+        tags: row.tags,
+      });
+    }
+  });
+
+  console.log(`✔️  ${validRows.length} rows valid, ${errors.length} rows invalid`);
+  if (errors.length > 0) {
+    console.warn('Invalid row details written to errors.json');
+    fs.writeFileSync('import-errors.json', JSON.stringify(errors, null, 2));
+  }
+
+  // Batch insert in transactions
+  let inserted = 0;
+  for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+    const batch = validRows.slice(i, i + BATCH_SIZE);
+    await db.transaction(async (tx) => {
+      const result = await tx
+        .insert(foods)
+        .values(batch)
+        .onConflictDoNothing({ target: foods.name });
+      inserted += result.rowCount ?? batch.length;
+    });
+    console.log(`➡️  Batch ${i / BATCH_SIZE + 1}: inserted ${inserted}/${i + batch.length}`);
+  }
+
+  console.log('\n🎉 Import complete!');
+  console.log(`   Total valid rows  : ${validRows.length}`);
+  console.log(`   Total inserted    : ${inserted}`);
+  console.log(`   Total errors      : ${errors.length}`);
+}
+
+importFoods().catch((err) => {
+  console.error('❌ Fatal import error:', err);
+  process.exit(1);
+});
