@@ -41,8 +41,12 @@ router.get('/foods', async (req, res) => {
     const count = Number(totalResult[0].count);
 
     // sorting
-    const orderCol = (sortBy === 'calories' ? foods.calories : foods.name) as any;
-    const orderDir = sortDir.toLowerCase() === 'desc' ? desc(orderCol) : asc(orderCol);
+    const orderCol = sortBy === 'calories'
+      ? foods.calories
+      : foods.name;
+    const orderDir = sortDir.toLowerCase() === 'desc'
+      ? desc(orderCol)
+      : asc(orderCol);
 
     // fetch page
     const items = await db
