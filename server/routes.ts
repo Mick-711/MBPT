@@ -14,6 +14,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import path from "path";
 import { or, eq, and, asc, desc } from "drizzle-orm";
+import nutritionRoutes from './routes/nutrition';
 
 // Session type setup for TypeScript
 declare module 'express-session' {
@@ -1125,6 +1126,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+
+  // Register nutrition routes
+  app.use('/api/nutrition', nutritionRoutes);
 
   // Create HTTP server
   const httpServer = createServer(app);

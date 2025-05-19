@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db';
 import { foods } from '../../shared/schema';
 import { sql, eq, ilike, and, desc, asc } from 'drizzle-orm';
+import { foodCategoryEnum } from '../../shared/schema';
 
 const router = Router();
 
@@ -25,7 +26,9 @@ router.get('/foods', async (req, res) => {
     }
     
     if (category && category !== 'all') {
-      conditions.push(eq(foods.category, category));
+      // Use as const to ensure type safety
+      const categoryValue = category as typeof foodCategoryEnum.enumValues[number];
+      conditions.push(eq(foods.category, categoryValue));
     }
     
     // Get total count for pagination
