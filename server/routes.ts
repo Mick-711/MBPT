@@ -22,7 +22,11 @@ declare module 'express-session' {
   }
 }
 
+import importRoutes from './routes/import';
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Import routes for data import
+  app.use('/api/import', importRoutes);
   // Session setup
   app.use(
     session({
