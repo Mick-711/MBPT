@@ -1,0 +1,99 @@
+// client/src/components/nutrition/FoodDatabase.tsx
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Spinner } from '@/components/ui/spinner';
+import { Table, TableHeader, TableRow, TableBody, TableCell } from '@/components/ui/table';
+import { Select } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+
+const categories = ['all', ...(Object.values(foodCategoryEnum.enumValues) as string[])];
+
+export function FoodDatabase() {
+  const [category, setCategory] = useState('all');
+  const [search, setSearch]     = useState('');
+  const [page, setPage]         = useState(1);
+
+  const { data, isLoading, error } = useQuery(
+    ['foods', { category, search, page }],
+    () =>
+      fetch(
+        `/api/nutrition/foods?` +
+        new URLSearchParams({
+          category,
+          search,
+          page: page.toString(),
+          pageSize: '20',
+          sortBy: 'name',
+          sortDir: 'asc',
+        })
+      )
+      .then((r) => r.json()),
+    {
+      keepPreviousData: true,
+      staleTime: 30_000,
+    }
+  );
+
+  if (isLoading) return <Spinner />;
+  if (error)     return <div className="text-red-500">Failed to load foods.</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Select value={category} onValueChange={setCategory}>
+          {categories.map((c) => (
+            <Select.Item key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </Select.Item>
+          ))}
+        </Select>
+        <Input
+          placeholder="Search food..."
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+        />
+        <Button onClick={() => setPage(1)}>Apply</Button>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Calories</TableCell>
+            <TableCell>Protein</TableCell>
+            <TableCell>Carbs</TableCell>
+            <TableCell>Fat</TableCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.items.map((f: any) => (
+            <TableRow key={f.id}>
+              <TableCell>{f.name}</TableCell>
+              <TableCell>{f.calories.toFixed(1)}</TableCell>
+              <TableCell>{f.protein}</TableCell>
+              <TableCell>{f.carbs}</TableCell>
+              <TableCell>{f.fat}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex justify-between items-center">
+        <Button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Previous
+        </Button>
+        <span>Page {page} of {Math.ceil(data.total / data.pageSize)}</span>
+        <Button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={page * data.pageSize >= data.total}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
