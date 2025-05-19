@@ -79,6 +79,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check if user is authenticated
   const isAuthenticated = (req: Request, res: Response, next: Function) => {
+    // Public routes bypass authentication
+    if (req.path.startsWith('/api/public')) {
+      return next();
+    }
+    
     if (req.isAuthenticated()) {
       return next();
     }
