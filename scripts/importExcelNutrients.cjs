@@ -125,7 +125,6 @@ async function importNutrients() {
               name, category, serving_size, serving_unit, calories, 
               protein, carbs, fat, fiber, is_public
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (name) DO NOTHING
             RETURNING id
           `;
           
