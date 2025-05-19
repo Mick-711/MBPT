@@ -17,6 +17,8 @@ import { or, eq, and, asc, desc } from "drizzle-orm";
 import nutritionRoutes from './routes/nutrition';
 import publicNutritionRoutes from './routes/publicNutrition';
 import trainerRoutes from './routes/trainer';
+import userRoutes from './routes/users';
+import clientRoutes from './routes/clients';
 
 // Session type setup for TypeScript
 declare module 'express-session' {
