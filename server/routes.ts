@@ -1127,8 +1127,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register nutrition routes - public access, no auth required
-  app.use('/api/nutrition', nutritionRoutes);
+  // Register nutrition routes with PUBLIC access - no auth required
+  app.use('/api/nutrition', (req, res, next) => {
+    // Skip authentication for nutrition routes
+    next();
+  }, nutritionRoutes);
 
   // Create HTTP server
   const httpServer = createServer(app);
